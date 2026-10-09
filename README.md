@@ -97,7 +97,7 @@ Start / restart the Node app in hPanel. Open `https://YOUR-DOMAIN` then `https:/
 ### Updates (GitHub → Hostinger)
 
 Repo: https://github.com/erion062/vitia-night-drop  
-Live shop data is **not** in GitHub. Hostinger Git deploys replace the app build folder, so the database is kept in `persistent/` next to `hbuilds/` (orders, customers, photos stay).
+Live shop data is **not** in GitHub. Hostinger Git deploys replace the app build folder, so the database is kept in `persistent/` next to `hbuilds/` (orders, customers, catalog, photos stay). `DB_PATH=data/vnd.db` on Hostinger is ignored because that path is inside the wiped build.
 
 In hPanel, open the **existing** vndviti.com Node app (do not Add Website, do not delete the live site):
 

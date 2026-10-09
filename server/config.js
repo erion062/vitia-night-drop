@@ -12,11 +12,28 @@ const isProd = env.NODE_ENV === 'production';
 
 // Hostinger Git deploys live under hbuilds/current/nodejs and wipe that folder
 // on every push. Keep the shop database next to the domain, not inside the build.
+function posixPath(p) {
+  return String(p).replace(/\\/g, '/');
+}
+
 function hostingerPersistentDir() {
-  const n = ROOT.replace(/\\/g, '/');
+  const n = posixPath(ROOT);
   const i = n.indexOf('/hbuilds/');
   if (i === -1) return '';
   return path.join(n.slice(0, i), 'persistent');
+}
+
+function insideHbuilds(absPath) {
+  return posixPath(absPath).includes('/hbuilds/');
+}
+
+function resolveShopPath(envValue, fileName) {
+  const persist = hostingerPersistentDir();
+  const fallback = path.join(persist || path.join(ROOT, 'data'), fileName);
+  if (!envValue) return fallback;
+  const resolved = path.resolve(ROOT, envValue);
+  if (persist && insideHbuilds(resolved)) return fallback;
+  return resolved;
 }
 
 function copyFileIfMissing(src, dest) {
@@ -26,36 +43,63 @@ function copyFileIfMissing(src, dest) {
   return true;
 }
 
-function defaultDataDir() {
-  return hostingerPersistentDir() || path.join(ROOT, 'data');
+function copyDbIfMissing(srcDb, destDb) {
+  if (!copyFileIfMissing(srcDb, destDb)) return false;
+  for (const extra of ['-wal', '-shm']) copyFileIfMissing(srcDb + extra, destDb + extra);
+  return true;
 }
 
-const dataDir = defaultDataDir();
-const dbPath = env.DB_PATH ? path.resolve(ROOT, env.DB_PATH) : path.join(dataDir, 'vnd.db');
-const uploadsDir = env.UPLOADS_DIR ? path.resolve(ROOT, env.UPLOADS_DIR) : path.join(dataDir, 'uploads');
+function copyUploadsIfEmpty(srcDir, destDir) {
+  if (!srcDir || srcDir === destDir || !fs.existsSync(srcDir)) return false;
+  if (fs.existsSync(destDir) && fs.readdirSync(destDir).length) return false;
+  fs.mkdirSync(destDir, { recursive: true });
+  fs.cpSync(srcDir, destDir, { recursive: true });
+  return true;
+}
 
-if (hostingerPersistentDir() && !env.DB_PATH) {
-  const domainRoot = path.dirname(hostingerPersistentDir());
-  for (const rel of ['data/vnd.db', 'nodejs/data/vnd.db', 'public_html/data/vnd.db']) {
-    if (copyFileIfMissing(path.join(domainRoot, rel), dbPath)) {
-      for (const extra of ['-wal', '-shm']) {
-        copyFileIfMissing(path.join(domainRoot, rel) + extra, dbPath + extra);
-      }
+const dbPath = resolveShopPath(env.DB_PATH, 'vnd.db');
+const uploadsDir = resolveShopPath(env.UPLOADS_DIR, 'uploads');
+
+const persistDir = hostingerPersistentDir();
+if (persistDir) {
+  const domainRoot = path.dirname(persistDir);
+  const dbCandidates = [];
+  if (env.DB_PATH) dbCandidates.push(path.resolve(ROOT, env.DB_PATH));
+  dbCandidates.push(
+    path.join(ROOT, 'data', 'vnd.db'),
+    path.resolve(ROOT, '..', 'previous', 'nodejs', 'data', 'vnd.db'),
+    path.resolve(ROOT, '..', '..', 'previous', 'nodejs', 'data', 'vnd.db'),
+    path.join(domainRoot, 'hbuilds', 'previous', 'nodejs', 'data', 'vnd.db'),
+    path.join(domainRoot, 'hbuilds', 'current', 'nodejs', 'data', 'vnd.db'),
+    path.join(domainRoot, 'data', 'vnd.db'),
+    path.join(domainRoot, 'nodejs', 'data', 'vnd.db'),
+    path.join(domainRoot, 'public_html', 'data', 'vnd.db'),
+  );
+  for (const src of dbCandidates) {
+    if (copyDbIfMissing(src, dbPath)) {
       console.warn(`[vnd] Copied existing shop database to ${dbPath} so Git deploys will not wipe it.`);
       break;
     }
   }
-  const destUploads = uploadsDir;
-  if (!fs.existsSync(destUploads) || fs.readdirSync(destUploads).length === 0) {
-    for (const rel of ['data/uploads', 'nodejs/data/uploads', 'public_html/data/uploads']) {
-      const src = path.join(domainRoot, rel);
-      if (!fs.existsSync(src) || src === destUploads) continue;
-      fs.mkdirSync(destUploads, { recursive: true });
-      fs.cpSync(src, destUploads, { recursive: true });
-      console.warn(`[vnd] Copied existing product photos to ${destUploads}.`);
+  const uploadCandidates = [];
+  if (env.UPLOADS_DIR) uploadCandidates.push(path.resolve(ROOT, env.UPLOADS_DIR));
+  uploadCandidates.push(
+    path.join(ROOT, 'data', 'uploads'),
+    path.resolve(ROOT, '..', 'previous', 'nodejs', 'data', 'uploads'),
+    path.resolve(ROOT, '..', '..', 'previous', 'nodejs', 'data', 'uploads'),
+    path.join(domainRoot, 'hbuilds', 'previous', 'nodejs', 'data', 'uploads'),
+    path.join(domainRoot, 'hbuilds', 'current', 'nodejs', 'data', 'uploads'),
+    path.join(domainRoot, 'data', 'uploads'),
+    path.join(domainRoot, 'nodejs', 'data', 'uploads'),
+    path.join(domainRoot, 'public_html', 'data', 'uploads'),
+  );
+  for (const src of uploadCandidates) {
+    if (copyUploadsIfEmpty(src, uploadsDir)) {
+      console.warn(`[vnd] Copied existing product photos to ${uploadsDir}.`);
       break;
     }
   }
+  console.warn(`[vnd] Shop database at ${dbPath}`);
 }
 
 export const config = {
