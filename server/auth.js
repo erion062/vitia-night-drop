@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { db } from './db.js';
 import { HttpError, nowIso } from './lib/util.js';
@@ -239,6 +240,54 @@ export function ensureAndiMarket() {
     );
     db.prepare('DELETE FROM sessions WHERE user_id = ?').run(existing.id);
     console.log('[vnd] Andi Market password reset from ANDI_PASSWORD. Remove ANDI_RESET_PASSWORD now.');
+  }
+}
+
+export function ensureFurraSofra() {
+  const { sofra } = config;
+  const phone = sofra.phone ? normalizeAdminPhone(sofra.phone) : '';
+  const now = nowIso();
+  const logoSrc = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'marketing', 'partners', 'sofra-logo.jpg');
+  const logo = '/uploads/sofra-logo.jpg';
+  try {
+    fs.mkdirSync(config.uploadsDir, { recursive: true });
+    if (fs.existsSync(logoSrc)) fs.copyFileSync(logoSrc, path.join(config.uploadsDir, 'sofra-logo.jpg'));
+  } catch {}
+  db.prepare(
+    `INSERT INTO partners (slug, name, tagline, logo_url, phone, hours, active, sort, created_at, kind)
+     VALUES ('sofra', 'Furra Sofra', 'Furra · bukë, burek, pizza', ?, ?, '', 1, 3, ?, 'bakery')
+     ON CONFLICT(slug) DO UPDATE SET name=excluded.name, tagline=excluded.tagline, logo_url=excluded.logo_url,
+       kind='bakery', active=1`,
+  ).run(logo, phone, now);
+
+  if (!phone || sofra.password.length < 6) {
+    if (config.isProd) console.warn('[vnd] SOFRA_PHONE / SOFRA_PASSWORD not set — Furra Sofra login was not created.');
+    return;
+  }
+  const existing = db.prepare("SELECT id FROM users WHERE role = 'partner' AND partner_slug = 'sofra'").get();
+  if (!existing) {
+    const byPhone = db.prepare('SELECT id, role FROM users WHERE phone = ?').get(phone);
+    if (byPhone) {
+      db.prepare("UPDATE users SET role = 'partner', partner_slug = 'sofra', full_name = ?, password_hash = ? WHERE id = ?").run(
+        sofra.name,
+        hashPassword(sofra.password),
+        byPhone.id,
+      );
+    } else {
+      db.prepare(
+        "INSERT INTO users (full_name, phone, password_hash, role, partner_slug, created_at) VALUES (?, ?, ?, 'partner', 'sofra', ?)",
+      ).run(sofra.name, phone, hashPassword(sofra.password), now);
+    }
+    console.log(`[vnd] Furra Sofra login created for ${phone}`);
+  } else if (sofra.resetPassword) {
+    db.prepare('UPDATE users SET password_hash = ?, phone = ?, full_name = ? WHERE id = ?').run(
+      hashPassword(sofra.password),
+      phone,
+      sofra.name,
+      existing.id,
+    );
+    db.prepare('DELETE FROM sessions WHERE user_id = ?').run(existing.id);
+    console.log('[vnd] Furra Sofra password reset from SOFRA_PASSWORD. Remove SOFRA_RESET_PASSWORD now.');
   }
 }
 

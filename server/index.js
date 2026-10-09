@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
-import { checkOrigin, ensureAdmin, ensureAndiMarket, loadUser, requireAuth } from './auth.js';
+import { checkOrigin, ensureAdmin, ensureAndiMarket, ensureFurraSofra, loadUser, requireAuth } from './auth.js';
 import { config } from './config.js';
 import { seedProductsIfEmpty } from './db.js';
 import { openStream } from './realtime.js';
@@ -15,6 +15,7 @@ import { HttpError } from './lib/util.js';
 
 ensureAdmin();
 ensureAndiMarket();
+ensureFurraSofra();
 seedProductsIfEmpty();
 
 const app = express();

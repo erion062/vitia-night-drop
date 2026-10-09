@@ -34,7 +34,7 @@ export interface Partner {
   tagline: string;
   logo_url: string;
   hours: string;
-  kind?: 'restaurant' | 'market';
+  kind?: 'restaurant' | 'market' | 'bakery';
 }
 
 export type OrderStatus =

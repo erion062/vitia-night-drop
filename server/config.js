@@ -134,6 +134,12 @@ export const config = {
     name: env.ANDI_NAME || 'Andi Market',
     resetPassword: env.ANDI_RESET_PASSWORD === 'true',
   },
+  sofra: {
+    phone: env.SOFRA_PHONE || '',
+    password: env.SOFRA_PASSWORD || '',
+    name: env.SOFRA_NAME || 'Furra Sofra',
+    resetPassword: env.SOFRA_RESET_PASSWORD === 'true',
+  },
   // Simulation can never be switched on in production, even if the env var is set.
   simulation: !isProd && env.ENABLE_SIMULATION === 'true',
   allowedOrigins: (env.ALLOWED_ORIGINS || '')

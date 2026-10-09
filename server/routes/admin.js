@@ -125,6 +125,8 @@ function productInput(b, partial = false) {
   const has = (k) => b[k] !== undefined;
   if (!partial || has('name')) out.name = str(b.name, { min: 1, max: 80, field: 'Name' });
   if (!partial || has('description')) out.description = str(b.description, { max: 200, field: 'Description', optional: true });
+  if (!partial || has('partner')) out.partner = str(b.partner, { max: 40, field: 'Partner', optional: true }) || '';
+  if (!partial || has('section')) out.section = str(b.section, { max: 40, field: 'Section', optional: true }) || '';
   if (!partial || has('category')) {
     if (!CATEGORIES.includes(b.category)) throw new HttpError(400, 'Invalid category');
     out.category = b.category;
@@ -159,8 +161,9 @@ router.post('/products', (req, res) => {
   const maxSort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS m FROM products').get().m;
   const r = db
     .prepare(
-      `INSERT INTO products (name, description, category, price_cents, cost_cents, image_url, accent, available, popular, sort, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO products (name, description, category, price_cents, cost_cents, image_url, accent, available, popular, sort,
+         partner, section, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       p.name,
@@ -173,6 +176,8 @@ router.post('/products', (req, res) => {
       p.available ?? 1,
       p.popular ?? 0,
       p.sort ?? maxSort + 1,
+      p.partner || '',
+      p.section || '',
       now,
       now,
     );

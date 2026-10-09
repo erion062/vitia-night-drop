@@ -376,7 +376,9 @@
   width: 52px;
   height: 52px;
   border-radius: 12px;
-  object-fit: cover;
+  object-fit: contain;
+  background: #fff;
+  padding: 4px;
   flex: none;
 }
 .partner-hero {
@@ -392,7 +394,9 @@
   width: 84px;
   height: 84px;
   border-radius: 16px;
-  object-fit: cover;
+  object-fit: contain;
+  background: #fff;
+  padding: 6px;
   flex: none;
 }
 .partner-hero h2 {
