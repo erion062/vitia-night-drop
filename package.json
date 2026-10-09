@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "dev:server": "node --watch server/index.js",
-    "build": "vite build",
+    "build": "npx vite build",
     "typecheck": "tsc --noEmit",
     "start": "node server/index.js",
     "icons": "node scripts/make-icons.mjs",
@@ -20,18 +20,18 @@
     "zip:launch": "node scripts/make-launch-zip.mjs"
   },
   "dependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
     "express": "^5.2.1",
     "leaflet": "1.9",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-router-dom": "^7.18.4"
+    "react-router-dom": "^7.18.4",
+    "vite": "^8.3.1"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.22",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.1",
-    "typescript": "^7.0.2",
-    "vite": "^8.3.1"
+    "typescript": "^7.0.2"
   }
 }
