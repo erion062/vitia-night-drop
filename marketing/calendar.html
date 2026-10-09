@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VND · Marketing calendar</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #121212; --surface: #181818; --surface-2: #1f1f1f; --border: #2a2a2a;
+      --text: #f2f2f2; --muted: #9a9a9a; --faint: #6b6b6b;
+      --accent: #00ff66; --accent-dim: rgba(0, 255, 102, 0.12); --accent-line: rgba(0, 255, 102, 0.35);
+      --warn: #ffb020; --danger: #ff4d4f;
+    }
+    body { background: var(--bg); color: var(--text); font: 15px/1.45 "Segoe UI", Inter, system-ui, sans-serif; padding: 24px 16px 80px; }
+    .wrap { max-width: 920px; margin: 0 auto; }
+    header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+    header svg { height: 28px; }
+    header h1 { font-size: 18px; font-weight: 800; letter-spacing: .02em; }
+    header span { color: var(--muted); font-size: 13px; }
+
+    .today { border: 1px solid var(--border); background: var(--surface); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+    .today.done { border-color: var(--accent-line); background: var(--accent-dim); }
+    .today.missed { border-color: rgba(255, 77, 79, .4); }
+    .today .label { font-size: 12px; font-weight: 800; letter-spacing: .14em; color: var(--muted); }
+    .today .status { font-size: 24px; font-weight: 800; margin: 6px 0 10px; }
+    .today.done .status { color: var(--accent); }
+    .today.missed .status { color: var(--danger); }
+
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+    .stat span { display: block; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .stat b { font-size: 22px; }
+    .bar { height: 6px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+    .bar i { display: block; height: 100%; background: var(--accent); }
+
+    .rules { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 20px; color: var(--muted); font-size: 13px; }
+    .rules b { color: var(--text); }
+    .rules ul { margin: 6px 0 0 18px; }
+
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    button { font: inherit; cursor: pointer; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 7px 14px; font-weight: 600; font-size: 13px; }
+    button.on { border-color: var(--accent-line); color: var(--accent); background: var(--accent-dim); }
+    button.primary { background: var(--accent); color: #04140a; border-color: var(--accent); font-weight: 800; }
+
+    h2 { font-size: 13px; letter-spacing: .14em; color: var(--muted); margin: 22px 0 8px; font-weight: 800; }
+    .day { display: grid; grid-template-columns: 64px 1fr; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 8px; }
+    .day.is-today { border-color: var(--accent); }
+    .day.is-done { opacity: .62; }
+    .day.is-missed { border-color: rgba(255, 77, 79, .35); }
+    .date { text-align: center; }
+    .date b { display: block; font-size: 22px; line-height: 1.1; }
+    .date span { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+    .head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .tag { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
+    .tag.tiktok { color: #ff5c8a; }
+    .tag.reel, .tag.post { color: #4da3ff; }
+    .tag.story { color: var(--warn); }
+    .title { font-weight: 800; }
+    .time { margin-left: auto; color: var(--faint); font-size: 12px; font-weight: 700; }
+    .todo { color: #d8d8d8; margin: 6px 0; font-size: 14px; }
+    .caption { background: var(--bg); border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #cfcfcf; white-space: pre-line; }
+    .asset { font-size: 12px; color: var(--faint); margin-top: 6px; }
+    .checks { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+    .checks label { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); cursor: pointer; }
+    .checks input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
+    .note { flex: 1; min-width: 180px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 13px; }
+    .copy { padding: 4px 10px; font-size: 12px; }
+    @media (max-width: 560px) { .day { grid-template-columns: 1fr; } .date { text-align: left; display: flex; gap: 8px; align-items: baseline; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg viewBox="0 0 106 40" aria-label="VND"><g transform="translate(12 0) skewX(-16.7)"><path fill="#00FF66" fill-rule="evenodd" d="M0 0H9L15 24L21 0H30L20 40H10Z M32 40V0H41L51 22V0H60V40H51L41 18V40Z M63 0H83L93 10V30L83 40H63Z M72 8V32H79L84 27V13L79 8Z"/></g></svg>
+    <div>
+      <h1>Marketing calendar</h1>
+      <span>1 Oct – 30 Oct 2026 · Instagram + TikTok · saved in this browser</span>
+    </div>
+  </header>
+
+  <section id="today" class="today"></section>
+
+  <section class="stats">
+    <div class="stat"><span>Days posted</span><b id="s-done">0/30</b><div class="bar"><i id="s-bar" style="width:0%"></i></div></div>
+    <div class="stat"><span>Streak</span><b id="s-streak">0 days</b></div>
+    <div class="stat"><span>Missed so far</span><b id="s-missed">0</b></div>
+  </section>
+
+  <section class="rules">
+    <b>Every day, no matter what:</b>
+    <ul>
+      <li>1 story between 18:00 and 21:00 (even a simple "Hapur sot deri 23:00").</li>
+      <li>Reply to every DM and comment before 23:00.</li>
+      <li>Always end with <b>vndviti.com</b> · 14:00–23:00 · Pagesa në dorëzim.</li>
+      <li>Never show or promote cigarettes in posts or ads (tobacco advertising is banned in Kosovo and on Instagram/TikTok). Show drinks, snacks, food.</li>
+      <li>No customer faces, house numbers, or plates without permission.</li>
+    </ul>
+  </section>
+
+  <div class="toolbar">
+    <button data-filter="all" class="on">All 30 days</button>
+    <button data-filter="week">This week</button>
+    <button data-filter="open">Not done</button>
+    <button id="export" style="margin-left:auto">Backup</button>
+    <button id="import">Restore</button>
+    <input id="import-file" type="file" accept="application/json" hidden />
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<script>
+const START = new Date(2026, 9, 1);
+const KEY = 'vnd-marketing-calendar-v1';
+const FOOT = '\n\n📍 Viti · 14:00–23:00\n💶 Min. €5 · Dorëzimi €4 · Pagesa në dorëzim\n👉 vndviti.com';
+
+const WEEKS = [
+  'WEEK 1 · LAUNCH — let Viti know VND exists',
+  'WEEK 2 · HOW IT WORKS — build trust',
+  'WEEK 3 · LOCAL PROOF — real orders, real Viti',
+  'WEEK 4 · OFFERS + HABIT — make VND the default',
+  'WEEK 5 · WRAP UP',
+];
+
+const PLAN = [
+  { type: 'IG Post', time: '19:00', title: 'Launch post', todo: 'Post the VND logo + story graphic as a 2-slide carousel. Pin it to your profile.', caption: 'VND ka nisur në Viti 🟢\nPije, ushqim e gjëra të nevojshme — operatori ta sjell tani, te dera.', asset: 'vnd-instagram.png + vnd-instagram-story.png (Desktop)' },
+  { type: 'TikTok', time: '20:00', title: 'The 3D promo', todo: 'Upload the Blender ad (or a screen recording of placing an order). Hook in the first second: "Mos dil sonte."', caption: 'Mos dil sonte. VND ta sjell te dera 🚗 #viti #kosova #vnd', asset: 'marketing/tiktok frames / screen recording' },
+  { type: 'IG Story', time: '19:30', title: 'Poll', todo: 'Story with poll sticker: "Çka të mungon më shumë natën?" — Pije / Ushqim / Snacks.', caption: 'Çka të mungon më shumë natën? 👇', asset: '' },
+  { type: 'IG Post', time: '18:00', title: 'Info card', todo: 'One clean graphic: hours, minimum, delivery fee, cash on delivery. Pin as 2nd post.', caption: 'Gjithçka që duhet ta dish për VND 👇\nOrari 14:00–23:00 · Min. €5 · Dorëzimi €4\nPaguan kur ta sjellim.', asset: 'Canva: 1080×1350, black + green' },
+  { type: 'TikTok', time: '20:30', title: 'POV video', todo: 'POV: you are on the couch, no mood to go out → phone → order → knock on the door. 10–15 sec.', caption: 'POV: s’ke qejf me dalë 😮‍💨 #viti #pov', asset: 'Film at home, use trending audio' },
+  { type: 'IG Story', time: '19:00', title: 'Behind the scenes', todo: 'Short clip loading bags into the car before a shift. Text: "Gati për sonte".', caption: 'Gati për sonte 🟢 Hapur deri 23:00', asset: '' },
+  { type: 'IG Reel', time: '20:00', title: 'How it works in 3 steps', todo: 'Reel: 1) Porosit në vndviti.com 2) Ne i blejmë 3) Te dera, paguan në dorë. Screen + door shot.', caption: 'Si funksionon VND? 3 hapa, 0 stres.\n1. Porosit\n2. Ne i blejmë\n3. Te dera — paguan në dorëzim', asset: 'Screen recording + 1 door shot' },
+
+  { type: 'IG Post', time: '18:30', title: 'Add VND to your home screen', todo: 'Carousel showing "Add to Home Screen" on iPhone and Android, so VND sits next to their apps.', caption: 'Vendose VND në ekran si aplikacion 📲\nHap vndviti.com → Share → Add to Home Screen.', asset: 'Screenshots from your phone' },
+  { type: 'TikTok', time: '21:00', title: 'Friday night pack', todo: 'Show a "film night" order: chips, drinks, chocolate laid out on a table.', caption: 'Pako për natën e filmit 🍿 pa dalë nga shtëpia #viti', asset: 'Real products from a delivery' },
+  { type: 'IG Story', time: '19:00', title: 'Q&A box', todo: 'Question sticker: "Pyet çka të duash për VND". Save answers for day 14.', caption: 'Pyet çka të duash 👇', asset: '' },
+  { type: 'IG Reel', time: '20:00', title: 'Night drive through Viti', todo: 'Timelapse of a delivery route. Film only when parked or by a passenger — never while you drive.', caption: 'Sonte në rrugë për ju, Viti 🌙', asset: 'Phone on a mount, passenger filming' },
+  { type: 'IG Post', time: '18:00', title: 'Top 5 most ordered', todo: 'Carousel of the 5 most ordered items this week (no cigarettes). Use admin → Revenue → top products.', caption: 'Më të porositurat këtë javë në VND 🔥\nCili është i yti?', asset: 'Admin dashboard top products' },
+  { type: 'TikTok', time: '20:30', title: 'Trend audio', todo: 'Pick one trending audio this week and match it to a door-delivery moment.', caption: '#viti #kosova #delivery', asset: 'TikTok trending sounds' },
+  { type: 'IG Story', time: '19:00', title: 'Answer the questions', todo: 'Reply to 3–5 questions from day 10 as stories.', caption: '', asset: '' },
+
+  { type: 'IG Post', time: '19:00', title: 'First review', todo: 'Screenshot a nice customer message (ask permission, hide name and number).', caption: 'Faleminderit për besimin 🟢 Kjo na jep forcë çdo natë.', asset: 'Customer WhatsApp / DM' },
+  { type: 'TikTok', time: '21:00', title: '"When the energy drink runs out at 22:00"', todo: 'Comedy skit: empty can, panic, order, door knock, relief.', caption: 'Kur të mbaron energjia në 22:00 😅 #viti', asset: '' },
+  { type: 'IG Story', time: '21:30', title: 'Closing countdown', todo: 'Countdown sticker to 23:00: "Edhe pak kohë për të porositur sonte".', caption: 'Mbyllemi në 23:00 ⏳', asset: '' },
+  { type: 'IG Story', time: '19:00', title: 'Weekly recap + share ask', todo: 'Story: "X porosi këtë javë — faleminderit Viti". Ask people to share VND with a friend.', caption: 'Shpërndaje me shokun që s’del kurrë nga shtëpia 😄', asset: 'Your order count from admin' },
+  { type: 'IG Reel', time: '20:00', title: 'Cash on delivery', todo: 'Reel explaining: no card, no app store, pay at the door.', caption: 'S’ke kartelë? S’ka problem.\nPaguan në dorë kur ta sjellim 💶', asset: '' },
+  { type: 'TikTok', time: '20:30', title: 'Door unboxing', todo: 'Customer POV opening the VND bag at the door (with permission, no face).', caption: 'Erdhi në 20 minuta 👀 #viti', asset: '' },
+  { type: 'IG Post', time: '18:00', title: 'Where we deliver', todo: 'Map graphic of the delivery area in Viti from admin → Delivery area.', caption: 'Ku dorëzojmë? Në gjithë zonën e Vitisë 📍\nShiko a je brenda në vndviti.com', asset: 'Screenshot of the delivery map' },
+
+  { type: 'IG Story', time: '19:00', title: 'Product poll', todo: 'Poll: "Çka të shtojmë në dyqan?" with 2 options. Actually add the winner.', caption: 'Çka të shtojmë? Ju vendosni 👇', asset: '' },
+  { type: 'TikTok', time: '21:00', title: 'Match night', todo: 'Football night setup: drinks + snacks on a table, TV in background.', caption: 'Ndeshja sonte? Snacks-at i sjellim ne ⚽ #viti', asset: '' },
+  { type: 'IG Post', time: '18:00', title: 'Weekend offer', todo: 'Decide the offer first (e.g. free delivery over €15 Saturday). Add it as an announcement in admin too.', caption: 'Vetëm sot: dorëzim falas për porosi mbi €15 🟢', asset: 'Admin → Announcements' },
+  { type: 'IG Story', time: '19:00', title: 'Thank you + offer result', todo: 'Story thanking everyone who used the offer. Show order count, not names.', caption: 'Faleminderit Viti! 🙏', asset: '' },
+  { type: 'IG Reel', time: '20:00', title: 'A night with the operator', todo: '30-sec day-in-the-life: phone ping, shop, bag, drive (parked shots), door.', caption: 'Një natë me operatorin e VND 🌙', asset: '' },
+  { type: 'TikTok', time: '20:30', title: 'Answer a comment', todo: 'Reply to a real comment with a video (TikTok "reply with video").', caption: '', asset: 'Best comment from the month' },
+  { type: 'IG Post', time: '18:30', title: 'FAQ carousel', todo: '5 slides: Ku dorëzoni? Sa kushton? Si paguaj? Sa shpejt? Deri në sa?', caption: 'Pyetjet më të shpeshta për VND 👇 Ruaje postimin.', asset: 'Canva carousel 1080×1350' },
+  { type: 'IG Story', time: '19:00', title: 'Reposts', todo: 'Repost every story where someone tagged VND this month.', caption: '', asset: '' },
+  { type: 'IG Post', time: '19:00', title: 'Month 1 recap', todo: 'Post: "Muaji i parë i VND" with total orders and a thank you. Then plan November.', caption: 'Muaji i parë i VND në Viti 🟢\nFaleminderit që na zgjodhët. Kjo është vetëm fillimi.', asset: 'Admin revenue page' },
+];
+
+const pad = (n) => String(n).padStart(2, '0');
+const keyOf = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const DAYS = PLAN.map((p, i) => {
+  const d = new Date(START);
+  d.setDate(START.getDate() + i);
+  return { ...p, date: d, key: keyOf(d), week: Math.floor(i / 7) };
+});
+
+const todayKey = keyOf(new Date());
+let state = load();
+let filter = 'all';
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; }
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); render(); }
+function entry(k) { return state[k] || (state[k] = { posted: false, story: false, dms: false, note: '' }); }
+
+function streak() {
+  let n = 0;
+  const idx = DAYS.findIndex((d) => d.key === todayKey);
+  let i = idx === -1 ? (new Date() > DAYS[DAYS.length - 1].date ? DAYS.length - 1 : -1) : idx;
+  if (i >= 0 && !state[DAYS[i].key]?.posted) i--;
+  for (; i >= 0 && state[DAYS[i].key]?.posted; i--) n++;
+  return n;
+}
+
+function renderToday() {
+  const el = document.getElementById('today');
+  const d = DAYS.find((x) => x.key === todayKey);
+  if (!d) {
+    const before = new Date() < START;
+    el.className = 'today';
+    el.innerHTML = `<div class="label">TODAY</div><div class="status">${before ? 'Plan starts on 1 Oct' : 'The 30-day plan is finished'}</div>`;
+    return;
+  }
+  const e = entry(d.key);
+  const late = new Date().getHours() >= 21 && !e.posted;
+  el.className = `today ${e.posted ? 'done' : late ? 'missed' : ''}`;
+  el.innerHTML = `
+    <div class="label">TODAY · ${d.date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+    <div class="status">${e.posted ? 'Yes, you posted today ✓' : late ? 'Not posted yet — post before 23:00' : 'Not posted yet'}</div>
+    <div class="todo"><b>${d.type} · ${d.time} — ${d.title}.</b> ${d.todo}</div>
+    <button class="primary" id="today-btn">${e.posted ? 'Undo' : 'I posted today'}</button>`;
+  document.getElementById('today-btn').onclick = () => { e.posted = !e.posted; save(); };
+}
+
+function renderStats() {
+  const done = DAYS.filter((d) => state[d.key]?.posted).length;
+  const missed = DAYS.filter((d) => d.key < todayKey && !state[d.key]?.posted).length;
+  document.getElementById('s-done').textContent = `${done}/30`;
+  document.getElementById('s-bar').style.width = `${(done / 30) * 100}%`;
+  const s = streak();
+  document.getElementById('s-streak').textContent = `${s} day${s === 1 ? '' : 's'}`;
+  document.getElementById('s-missed').textContent = missed;
+}
+
+function tagClass(type) {
+  return type === 'TikTok' ? 'tiktok' : type.includes('Reel') ? 'reel' : type.includes('Story') ? 'story' : 'post';
+}
+
+function renderList() {
+  const list = document.getElementById('list');
+  const thisWeek = DAYS.find((d) => d.key === todayKey)?.week ?? 0;
+  const shown = DAYS.filter((d) =>
+    filter === 'week' ? d.week === thisWeek : filter === 'open' ? !state[d.key]?.posted : true,
+  );
+  let html = '';
+  let lastWeek = -1;
+  for (const d of shown) {
+    if (d.week !== lastWeek) { html += `<h2>${WEEKS[d.week]}</h2>`; lastWeek = d.week; }
+    const e = state[d.key] || {};
+    const cls = ['day', d.key === todayKey && 'is-today', e.posted && 'is-done', d.key < todayKey && !e.posted && 'is-missed'].filter(Boolean).join(' ');
+    const cap = d.caption ? d.caption + FOOT : '';
+    html += `
+      <article class="${cls}" data-key="${d.key}">
+        <div class="date"><b>${d.date.getDate()}</b><span>${d.date.toLocaleDateString('en-GB', { weekday: 'short' })} · Oct</span></div>
+        <div>
+          <div class="head"><span class="tag ${tagClass(d.type)}">${d.type}</span><span class="title">${d.title}</span><span class="time">post at ${d.time}</span></div>
+          <p class="todo">${d.todo}</p>
+          ${cap ? `<div class="caption">${escapeHtml(cap)}</div>` : ''}
+          ${d.asset ? `<div class="asset">Use: ${d.asset}</div>` : ''}
+          <div class="checks">
+            <label><input type="checkbox" data-f="posted" ${e.posted ? 'checked' : ''}/> Posted</label>
+            <label><input type="checkbox" data-f="story" ${e.story ? 'checked' : ''}/> Daily story</label>
+            <label><input type="checkbox" data-f="dms" ${e.dms ? 'checked' : ''}/> Replied to DMs</label>
+            ${cap ? '<button class="copy">Copy caption</button>' : ''}
+            <input class="note" data-f="note" placeholder="Notes: views, likes, new followers…" value="${escapeHtml(e.note || '')}" />
+          </div>
+        </div>
+      </article>`;
+  }
+  list.innerHTML = html;
+
+  list.querySelectorAll('article').forEach((a) => {
+    const k = a.dataset.key;
+    const d = DAYS.find((x) => x.key === k);
+    a.querySelectorAll('input[type=checkbox]').forEach((c) => (c.onchange = () => { entry(k)[c.dataset.f] = c.checked; save(); }));
+    a.querySelector('.note').onchange = (ev) => { entry(k).note = ev.target.value; save(); };
+    const copy = a.querySelector('.copy');
+    if (copy) copy.onclick = async () => {
+      await navigator.clipboard.writeText(d.caption + FOOT);
+      copy.textContent = 'Copied ✓';
+      setTimeout(() => (copy.textContent = 'Copy caption'), 1500);
+    };
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function render() { renderToday(); renderStats(); renderList(); }
+
+document.querySelectorAll('[data-filter]').forEach((b) => (b.onclick = () => {
+  filter = b.dataset.filter;
+  document.querySelectorAll('[data-filter]').forEach((x) => x.classList.toggle('on', x === b));
+  renderList();
+}));
+
+document.getElementById('export').onclick = () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `vnd-calendar-backup-${todayKey}.json`;
+  a.click();
+};
+document.getElementById('import').onclick = () => document.getElementById('import-file').click();
+document.getElementById('import-file').onchange = async (ev) => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  try { state = JSON.parse(await file.text()); save(); } catch { alert('That file is not a calendar backup.'); }
+};
+
+render();
+</script>
+</body>
+</html>

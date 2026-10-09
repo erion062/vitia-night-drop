@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1080" />
+  <title>VND Instagram Story</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 1080px; height: 1920px; overflow: hidden; background: #121212; }
+    .story {
+      width: 1080px;
+      height: 1920px;
+      position: relative;
+      color: #f2f2f2;
+      font-family: Inter, system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse 90% 55% at 50% 38%, rgba(0, 255, 102, 0.16), transparent 62%),
+        radial-gradient(ellipse 70% 40% at 80% 90%, rgba(0, 255, 102, 0.06), transparent 70%),
+        #121212;
+      display: flex;
+      flex-direction: column;
+      padding: 280px 88px 240px;
+    }
+    .story::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(#00ff66 1px, transparent 1px);
+      background-size: 72px 72px;
+      opacity: 0.06;
+      pointer-events: none;
+    }
+    .brand { text-align: center; z-index: 1; }
+    .logo {
+      height: 92px;
+      margin: 0 auto 18px;
+      display: block;
+    }
+    .sub {
+      letter-spacing: 0.28em;
+      font-size: 22px;
+      font-weight: 700;
+      color: #9a9a9a;
+    }
+    .tag {
+      margin-top: 10px;
+      letter-spacing: 0.18em;
+      font-size: 18px;
+      font-weight: 800;
+      color: #00ff66;
+    }
+    .pill {
+      z-index: 1;
+      align-self: center;
+      margin: 48px 0 56px;
+      padding: 10px 22px;
+      border-radius: 999px;
+      background: rgba(0, 255, 102, 0.12);
+      border: 1px solid rgba(0, 255, 102, 0.45);
+      color: #00ff66;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: 0.14em;
+    }
+    h1 {
+      z-index: 1;
+      text-align: center;
+      font-size: 92px;
+      line-height: 0.95;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+    .lead {
+      z-index: 1;
+      text-align: center;
+      margin-top: 28px;
+      font-size: 34px;
+      font-weight: 600;
+      color: #d8d8d8;
+      line-height: 1.35;
+    }
+    .lead b { color: #00ff66; font-weight: 800; }
+    .facts {
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-top: auto;
+    }
+    .fact {
+      background: #181818;
+      border: 1px solid #2a2a2a;
+      border-radius: 22px;
+      padding: 22px 12px 20px;
+      text-align: center;
+    }
+    .fact span {
+      display: block;
+      color: #9a9a9a;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .fact b {
+      font-size: 28px;
+      font-weight: 800;
+    }
+    .cta {
+      z-index: 1;
+      margin-top: 36px;
+      height: 96px;
+      border-radius: 999px;
+      background: #00ff66;
+      color: #04140a;
+      display: grid;
+      place-items: center;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+    .url {
+      z-index: 1;
+      text-align: center;
+      margin-top: 28px;
+      font-size: 34px;
+      font-weight: 800;
+      color: #00ff66;
+      letter-spacing: 0.02em;
+    }
+    .fine {
+      z-index: 1;
+      text-align: center;
+      margin-top: 18px;
+      color: #6b6b6b;
+      font-size: 18px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <article class="story">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 106 40" aria-label="VND">
+        <g transform="translate(12 0) skewX(-16.7)">
+          <path fill="#00FF66" fill-rule="evenodd" d="M0 0H9L15 24L21 0H30L20 40H10Z M32 40V0H41L51 22V0H60V40H51L41 18V40Z M63 0H83L93 10V30L83 40H63Z M72 8V32H79L84 27V13L79 8Z"/>
+        </g>
+      </svg>
+      <div class="sub">VITIA NIGHT DROP</div>
+      <div class="tag">NE DALIM PËR TY.</div>
+    </div>
+    <div class="pill">TANI NË VITI</div>
+    <h1>MOS DIL<br>SONTE</h1>
+    <p class="lead">Pije dhe ushqim.<br>Operatori ta sjell tani,<br><b>te dera.</b></p>
+    <div class="facts">
+      <div class="fact"><span>Orari</span><b>14:00–23:00</b></div>
+      <div class="fact"><span>Min. porosia</span><b>€5</b></div>
+      <div class="fact"><span>Dorëzimi</span><b>€4</b></div>
+    </div>
+    <div class="cta">POROSIT TANI</div>
+    <div class="url">vndviti.com</div>
+    <p class="fine">Viti, Kosovë · Pagesa në dorëzim</p>
+  </article>
+</body>
+</html>

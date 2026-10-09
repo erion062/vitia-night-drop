@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+
+# Live shop data and secrets — never commit or deploy from GitHub
+data/*
+!data/.gitkeep
+vnd-admin-login.txt
+vnd-*-login.txt
+
+# Rendered ads / wallpaper videos (too large for git)
+*.mp4
+*.webm
+*.blend1

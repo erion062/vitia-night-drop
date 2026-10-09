@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=390, initial-scale=1" />
+  <title>VND shop</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 390px; height: 844px; background: #121212; overflow: hidden; font-family: "Segoe UI", Inter, system-ui, sans-serif; color: #f2f2f2; }
+    .top { display: flex; justify-content: space-between; padding: 12px 18px; font-size: 12px; font-weight: 700; color: #9a9a9a; }
+    .hero { padding: 8px 22px 0; text-align: center; }
+    .logo { height: 36px; margin: 0 auto 8px; display: block; }
+    .sub { letter-spacing: .28em; font-size: 10px; font-weight: 700; color: #9a9a9a; }
+    .tag { margin-top: 4px; letter-spacing: .16em; font-size: 10px; font-weight: 800; color: #00ff66; }
+    .pitch { margin: 16px 0 12px; font-size: 18px; font-weight: 700; line-height: 1.25; }
+    .pitch b { color: #00ff66; }
+    .pill { display: inline-block; padding: 6px 12px; border-radius: 999px; background: rgba(0,255,102,.12); border: 1px solid rgba(0,255,102,.4); color: #00ff66; font-size: 11px; font-weight: 800; }
+    .facts { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 18px 18px 0; }
+    .fact { background: #181818; border: 1px solid #2a2a2a; border-radius: 14px; padding: 12px 6px; text-align: center; }
+    .fact span { display: block; color: #9a9a9a; font-size: 10px; font-weight: 600; margin-bottom: 4px; }
+    .fact b { font-size: 14px; }
+    .cats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 18px 0; }
+    .cat { background: #181818; border: 1px solid #2a2a2a; border-radius: 16px; padding: 16px 14px; font-weight: 800; font-size: 15px; }
+    .cat small { display: block; color: #9a9a9a; font-weight: 600; font-size: 11px; margin-top: 4px; }
+    .cta {
+      position: absolute; left: 18px; right: 18px; bottom: 28px; height: 56px;
+      border-radius: 999px; background: #00ff66; color: #04140a;
+      display: grid; place-items: center; font-size: 16px; font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+  <div class="top"><span>22:14</span><span>Viti</span></div>
+  <div class="hero">
+    <svg class="logo" viewBox="0 0 106 40"><g transform="translate(12 0) skewX(-16.7)"><path fill="#00FF66" fill-rule="evenodd" d="M0 0H9L15 24L21 0H30L20 40H10Z M32 40V0H41L51 22V0H60V40H51L41 18V40Z M63 0H83L93 10V30L83 40H63Z M72 8V32H79L84 27V13L79 8Z"/></g></svg>
+    <div class="sub">VITIA NIGHT DROP</div>
+    <div class="tag">NE DALIM PËR TY.</div>
+    <p class="pitch">Mos dil natën — pije, cigare, ushqim. Operatori ta sjell tani, <b>te dera.</b></p>
+    <div class="pill">HAPUR · 14:00–23:00</div>
+  </div>
+  <div class="facts">
+    <div class="fact"><span>Orari</span><b>14:00–23:00</b></div>
+    <div class="fact"><span>Min.</span><b>€5</b></div>
+    <div class="fact"><span>Dorëzimi</span><b>€4</b></div>
+  </div>
+  <div class="cats">
+    <div class="cat">Pije<small>të ftohta · kafe</small></div>
+    <div class="cat">Ushqim<small>snacks · fast</small></div>
+    <div class="cat">Cigare<small>sot, te dera</small></div>
+    <div class="cat">Të tjera<small>çfarë të duash</small></div>
+  </div>
+  <div class="cta">POROSIT TANI</div>
+</body>
+</html>

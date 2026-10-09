@@ -1,0 +1,2 @@
+# data/vnd.db and data/uploads/ are created on the server and stay there.
+# GitHub never contains the live database.

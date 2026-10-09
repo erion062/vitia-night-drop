@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VND · Partner outreach</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #121212; --surface: #181818; --surface-2: #1f1f1f; --border: #2a2a2a;
+      --text: #f2f2f2; --muted: #9a9a9a; --faint: #6b6b6b;
+      --accent: #00ff66; --accent-dim: rgba(0, 255, 102, 0.12); --accent-line: rgba(0, 255, 102, 0.35);
+      --warn: #ffb020; --danger: #ff4d4f; --blue: #4da3ff;
+    }
+    body { background: var(--bg); color: var(--text); font: 15px/1.45 "Segoe UI", Inter, system-ui, sans-serif; padding: 24px 16px 80px; }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+    header svg { height: 28px; }
+    header h1 { font-size: 18px; font-weight: 800; letter-spacing: .02em; }
+    header span { color: var(--muted); font-size: 13px; }
+
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+    .panel.hi { border-color: var(--accent-line); background: var(--accent-dim); }
+    .panel h2 { font-size: 12px; letter-spacing: .14em; color: var(--muted); font-weight: 800; margin-bottom: 8px; }
+    .panel p, .panel li { color: #d8d8d8; font-size: 14px; }
+    .panel ul, .panel ol { margin: 6px 0 0 18px; }
+    .panel li + li { margin-top: 3px; }
+    .big { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .big b { color: var(--accent); }
+
+    .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px; }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+    .stat span { display: block; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .stat b { font-size: 22px; }
+    .stat.joined b { color: var(--accent); }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .tpl { background: var(--bg); border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #cfcfcf; white-space: pre-line; margin-top: 6px; }
+    textarea.tpl { display: block; width: 100%; font: inherit; font-size: 13px; line-height: 1.45; resize: vertical; white-space: pre-wrap; }
+    textarea.tpl:focus { outline: none; border-style: solid; border-color: var(--accent-line); }
+
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0 12px; align-items: center; }
+    button, select, input[type=text], input[type=search] { font: inherit; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 7px 14px; font-weight: 600; font-size: 13px; }
+    button { cursor: pointer; }
+    button.on { border-color: var(--accent-line); color: var(--accent); background: var(--accent-dim); }
+    button.primary { background: var(--accent); color: #04140a; border-color: var(--accent); font-weight: 800; }
+    input[type=search] { flex: 1; min-width: 200px; border-radius: 10px; }
+    a.btn { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); color: var(--text); background: var(--surface-2); }
+    a.btn.wa { border-color: rgba(37, 211, 102, .5); color: #25d366; }
+    a.btn.call { color: var(--blue); }
+    a.btn.mail { color: var(--warn); }
+    a.btn.off { opacity: .35; pointer-events: none; }
+
+    .biz { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 8px; }
+    .biz.s-joined { border-color: var(--accent); }
+    .biz.s-no { opacity: .45; }
+    .biz.due { border-color: var(--warn); }
+    .head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .name { font-weight: 800; font-size: 16px; }
+    .tag { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .tag.food { color: #ff8a3d; } .tag.market { color: var(--blue); } .tag.bakery { color: #e6c35c; } .tag.cafe { color: #c08cff; }
+    .tag.src { color: var(--faint); }
+    .meta { color: var(--muted); font-size: 13px; margin: 4px 0 10px; }
+    .meta a { color: var(--muted); }
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .track { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+    .track select { border-radius: 8px; }
+    .track .note { flex: 1; min-width: 180px; border-radius: 8px; font-weight: 400; }
+    .track .ig { width: 170px; border-radius: 8px; font-weight: 400; }
+    .when { font-size: 12px; color: var(--faint); }
+    .when.due { color: var(--warn); font-weight: 700; }
+    .more { text-align: center; margin: 14px 0; }
+    .empty { color: var(--muted); text-align: center; padding: 30px; }
+    dialog { margin: auto; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 16px; padding: 18px; width: min(460px, 92vw); }
+    dialog::backdrop { background: rgba(0,0,0,.6); }
+    dialog label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; font-weight: 700; }
+    dialog input, dialog select { width: 100%; border-radius: 8px; }
+    @media (max-width: 720px) { .stats { grid-template-columns: repeat(3, 1fr); } .grid2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg viewBox="0 0 106 40" aria-label="VND"><g transform="translate(12 0) skewX(-16.7)"><path fill="#00FF66" fill-rule="evenodd" d="M0 0H9L15 24L21 0H30L20 40H10Z M32 40V0H41L51 22V0H60V40H51L41 18V40Z M63 0H83L93 10V30L83 40H63Z M72 8V32H79L84 27V13L79 8Z"/></g></svg>
+    <div>
+      <h1>Partner outreach · Viti</h1>
+      <span id="sub">Food places and markets in Viti · free to join · saved in this browser</span>
+    </div>
+  </header>
+
+  <section id="today" class="panel hi"></section>
+
+  <section class="stats">
+    <div class="stat"><span>Businesses</span><b id="s-all">0</b></div>
+    <div class="stat"><span>Contacted</span><b id="s-contacted">0</b></div>
+    <div class="stat"><span>Replied</span><b id="s-replied">0</b></div>
+    <div class="stat"><span>Interested</span><b id="s-interested">0</b></div>
+    <div class="stat joined"><span>Joined VND</span><b id="s-joined">0</b></div>
+  </section>
+
+  <section class="panel">
+    <h2>THE OFFER (say it the same way every time)</h2>
+    <ul>
+      <li><b>Free.</b> No signup fee, no commission, no contract. They can stop any day.</li>
+      <li>VND puts their menu or products on <b>vndviti.com</b> with photos, plus a free shout-out on Instagram and TikTok when they join.</li>
+      <li>A customer orders, you pick it up, and you <b>pay the business its normal price in cash</b> at pickup. The customer pays you on delivery, and the €4 delivery fee is what VND earns.</li>
+      <li>Hours 14:00–23:00. You call them when an order comes in; they only have to have it ready.</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>HOW TO DO IT WITHOUT BEING SPAM</h2>
+    <ol>
+      <li>Check the messages below, then work the <b>daily batch</b>: 10 businesses a day, food first. Visit the 5 closest in person; it is a small town and a face wins.</li>
+      <li>One personal message each, from the VND number. Use the business contacts they published (ARBK register, Google Maps, their page). Never buy lists or blast the same text to everyone at once.</li>
+      <li>One follow-up after 3 days at most. If they say no or don't answer the follow-up, mark it and stop.</li>
+      <li>When someone says yes, collect the onboarding items on the right and add their products in the VND admin that same day. Then post about them.</li>
+    </ol>
+  </section>
+
+  <section class="grid2">
+    <div class="panel">
+      <h2>VISIT / CALL SCRIPT · click to edit</h2>
+      <textarea class="tpl edit" id="tpl-visit" rows="9"></textarea>
+    </div>
+    <div class="panel">
+      <h2>WHEN THEY SAY YES · COLLECT</h2>
+      <ul>
+        <li>Menu or product list with their prices</li>
+        <li>5–10 photos (take them yourself on the spot)</li>
+        <li>Logo, Instagram handle, OK to tag them</li>
+        <li>Opening hours and prep time per order</li>
+        <li>One phone number to call for orders, and where to pick up</li>
+        <li>Their 3 bestsellers (put those first on VND)</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>MESSAGES · click to edit, saved automatically</h2>
+    <p class="when">{biznesi} = the business name, {oferta} = what they sell (menu, market products…). They are filled in for each business.</p>
+    <div class="grid2" style="margin-top:8px">
+      <div>
+        <div class="when">First message (WhatsApp / email)</div>
+        <textarea class="tpl edit" id="tpl-first" rows="14"></textarea>
+      </div>
+      <div>
+        <div class="when">Follow-up (after 3 days)</div>
+        <textarea class="tpl edit" id="tpl-follow" rows="14"></textarea>
+      </div>
+    </div>
+    <div class="actions" style="margin-top:10px">
+      <button id="tpl-reset">Reset to original text</button>
+      <span class="when" id="tpl-saved"></span>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <button data-type="all" class="on">All</button>
+    <button data-type="food">Food</button>
+    <button data-type="market">Markets</button>
+    <button data-type="bakery">Bakeries</button>
+    <button data-type="cafe">Cafés</button>
+  </div>
+  <div class="toolbar" style="margin-top:0">
+    <select id="status-filter">
+      <option value="todo">Not contacted</option>
+      <option value="due">Follow-up due</option>
+      <option value="open">In progress</option>
+      <option value="joined">Joined</option>
+      <option value="any">Every status</option>
+    </select>
+    <input id="q" type="search" placeholder="Search name, street, village…" />
+    <button id="add">+ Add business</button>
+    <button id="export">Backup</button>
+    <button id="import">Restore</button>
+    <input id="import-file" type="file" accept="application/json" hidden />
+  </div>
+
+  <div id="list"></div>
+  <div class="more"><button id="more" hidden>Show more</button></div>
+
+  <p class="when" style="margin-top:24px">Source: the public business register (ARBK, via arbk.org), active businesses in Viti municipality in the restaurant and retail sectors, plus businesses listed on Google Maps / OpenStreetMap and travel guides. Re-run <code>node scripts/find-partners.mjs</code> to refresh.</p>
+</div>
+
+<dialog id="add-dialog">
+  <form method="dialog" id="add-form">
+    <div class="name">Add a business you found online</div>
+    <label>Name</label><input name="name" type="text" required />
+    <label>Type</label>
+    <select name="type"><option value="food">Food</option><option value="market">Market</option><option value="bakery">Bakery</option><option value="cafe">Café</option></select>
+    <label>Phone (public business number)</label><input name="phone" type="text" placeholder="+383 44 123 456" />
+    <label>Instagram / Facebook</label><input name="ig" type="text" placeholder="@name or link" />
+    <label>Address</label><input name="address" type="text" />
+    <div class="actions" style="margin-top:14px; justify-content:flex-end">
+      <button value="cancel" formnovalidate>Cancel</button>
+      <button value="ok" class="primary">Add</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="partners-data.js"></script>
+<script>
+const KEY = 'vnd-partners-v1';
+const BATCH = 10;
+const FOLLOW_UP_DAYS = 3;
+
+// Found on Google Maps / OpenStreetMap / travel guides (public business listings).
+const LISTED = [
+  { name: 'Restaurant Roi', type: 'food', phone: '+38349790770', address: 'Rr. Adem Jashari, Viti', source: 'https://www.travelzom.com/en/Viti' },
+  { name: 'Restaurant Lindi', type: 'food', phone: '+38344650065', address: 'Viti', source: 'https://www.travelzom.com/en/Viti' },
+  { name: 'Restaurant Lisi', type: 'food', phone: '+38344916508', address: 'Rr. Presheva, Viti', source: 'https://www.travelzom.com/en/Viti' },
+  { name: 'Restaurant Arra', type: 'food', phone: '+38344210713', address: 'Viti', source: 'https://www.travelzom.com/en/Viti' },
+  { name: 'Amici Food & Sweets', type: 'food', phone: '+38349713171', address: 'Rr. Adem Jashari, Viti', source: 'https://www.travelzom.com/en/Viti' },
+  { name: 'Home Cake', type: 'bakery', phone: '', address: 'Viti', source: 'https://www.travelzom.com/en/Viti' },
+  { name: 'Restaurant Parku Ilir', type: 'food', phone: '+38344448646', address: 'Letnicë', source: 'https://www.travelzom.com/en/Viti' },
+  { name: 'Jeta (fast food)', type: 'food', phone: '', address: 'Adem Jashari 131, Viti', source: 'https://mapcarta.com/N4949526551' },
+  { name: 'EuroShop', type: 'market', phone: '+38344194159', address: 'Kongresi i Manastirit, Viti', source: 'https://mapcarta.com/N4516959291' },
+  { name: 'ELA-center', type: 'market', phone: '', address: 'near Gërmovë, Viti', source: 'https://mapcarta.com/N7390002686' },
+  { name: 'Mediteran', type: 'market', phone: '', address: 'Viti (toward Pozharan)', source: 'https://mapcarta.com/W715012001' },
+  { name: 'Plus Market', type: 'market', phone: '', address: 'Drobesh + 3 other points, owner Sylejman Neziri', source: 'https://www.radiokosovaelire.com/ne-drobesh-te-vitise-u-hap-pika-e-re-e-plus-marketit-rrjeti-i-marketeve-pa-produkte-serbe/' },
+  { name: 'Viva Fresh Viti', type: 'market', phone: '', address: 'near Enti Social, Viti (chain: ask the store manager)', source: 'https://mapcarta.com/W681856010' },
+].map((b, i) => ({ id: 'listed-' + i, ...b, listed: true }));
+
+const OFFER = {
+  food: 'ushqimin nga menyja juaj',
+  market: 'produktet e marketit tuaj',
+  bakery: 'produktet e furrës / ëmbëltores suaj',
+  cafe: 'pijet dhe ëmbëlsirat tuaja',
+};
+
+const STATUSES = [
+  ['todo', 'Not contacted'],
+  ['messaged', 'Messaged'],
+  ['followed', 'Followed up'],
+  ['visited', 'Visited'],
+  ['replied', 'Replied'],
+  ['interested', 'Interested'],
+  ['joined', 'Joined VND'],
+  ['no', 'Said no / no answer'],
+];
+
+let state = load();
+let typeFilter = 'all';
+let shown = 30;
+
+function load() {
+  try { return { track: {}, custom: [], tpl: {}, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; }
+  catch { return { track: {}, custom: [], tpl: {} }; }
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+
+function allBusinesses() {
+  const reg = window.VND_PARTNERS || [];
+  const phones = new Set(reg.map((b) => b.phone).filter(Boolean));
+  const listed = LISTED.filter((b) => !b.phone || !phones.has(b.phone));
+  return [...state.custom, ...listed, ...reg].filter((b) => !b.dupPhone);
+}
+
+const today = () => new Date().toISOString().slice(0, 10);
+const addDays = (iso, n) => { const d = new Date(iso); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+const t = (id) => state.track[id] || { status: 'todo' };
+const isMobile = (p) => /^\+383(4[3-9])\d{6}$/.test(p || '');
+const shortName = (n) => n.replace(/\s*(SH\.?P\.?K\.?|B\.?I\.?|L\.?L\.?C\.?|SH\.?A\.?)\s*$/i, '').trim();
+const fmtPhone = (p) => p ? p.replace(/^\+383(\d{2})(\d{3})(\d{3,4})$/, '+383 $1 $2 $3') : '';
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const DEFAULT_TPL = {
+  first: `Përshëndetje, {biznesi}!
+Ne jemi VND – Vitia Night Drop (vndviti.com), shërbimi i ri i dërgesave në Viti, 14:00–23:00.
+
+Do të donim t'ju shtonim si partner në faqen tonë FALAS: pa pagesë, pa komision, pa kontratë.
+
+Si funksionon: klienti porosit {oferta} në vndviti.com, ne vijmë e marrim porosinë dhe jua paguajmë çmimin tuaj të plotë në kesh, pastaj ia dërgojmë klientit te dera. Ju fitoni klientë të rinj pa asnjë shpenzim, ne merremi me dërgesën. Ju bëjmë edhe reklamë falas në Instagram dhe TikTok.
+
+A mund të kalojmë 5 minuta nga ju këtë javë, apo t'ju dërgojmë detajet këtu?
+Faleminderit!
+VND`,
+  follow: `Përshëndetje përsëri nga VND (vndviti.com). Vetëm po pyesim nëse e patë mesazhin tonë për bashkëpunimin falas.
+Nëse ju intereson, ju shtojmë në faqe brenda ditës: mjafton menyja me çmime dhe disa foto, i bëjmë ne. Nëse jo, s'ka problem, nuk do t'ju shqetësojmë më. Faleminderit!
+VND`,
+  visit: `"Përshëndetje, ne jemi VND, dërgesat e reja në Viti. 30 sekonda: ju shtojmë në faqen tonë falas, pa komision. Kur dikush porosit nga ju, ne vijmë, jua paguajmë çmimin tuaj në kesh dhe ia dërgojmë klientit. Ju shitni më shumë, ne bëjmë dërgesën. A ju intereson?"
+
+Nëse thonë "po": "Na jepni menynë me çmime dhe një numër ku t'ju thërrasim kur vjen porosia. Fotot i bëjmë ne tani."`,
+};
+
+const tpl = (key) => state.tpl?.[key] ?? DEFAULT_TPL[key];
+const fill = (text, b) => text
+  .replaceAll('{biznesi}', shortName(b.name))
+  .replaceAll('{oferta}', OFFER[b.type] || OFFER.food);
+
+function firstMessage(b) { return fill(tpl('first'), b); }
+function followUp(b) { return fill(tpl('follow'), b); }
+
+function messageFor(b) {
+  const s = t(b.id).status;
+  return s === 'messaged' || s === 'followed' ? followUp(b) : firstMessage(b);
+}
+
+function isDue(b) {
+  const tr = t(b.id);
+  return tr.status === 'messaged' && tr.followUp && tr.followUp <= today();
+}
+
+function matches(b) {
+  const s = t(b.id).status;
+  const f = document.getElementById('status-filter').value;
+  if (typeFilter !== 'all' && b.type !== typeFilter) return false;
+  if (f === 'todo' && s !== 'todo') return false;
+  if (f === 'due' && !isDue(b)) return false;
+  if (f === 'open' && !['messaged', 'followed', 'visited', 'replied', 'interested'].includes(s)) return false;
+  if (f === 'joined' && s !== 'joined') return false;
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  if (q && !`${b.name} ${b.legal || ''} ${b.address} ${b.phone}`.toLowerCase().includes(q)) return false;
+  return true;
+}
+
+function card(b) {
+  const tr = t(b.id);
+  const msg = messageFor(b);
+  const wa = isMobile(b.phone) ? `https://wa.me/${b.phone.slice(1)}?text=${encodeURIComponent(msg)}` : '';
+  const mail = b.email ? `mailto:${b.email}?subject=${encodeURIComponent('Bashkëpunim falas me VND – dërgesa në Viti')}&body=${encodeURIComponent(msg)}` : '';
+  const q = encodeURIComponent(`${shortName(b.name)} Viti`);
+  const due = isDue(b);
+  const typeLabel = { food: 'Food', market: 'Market', bakery: 'Bakery', cafe: 'Café' }[b.type] || b.type;
+  return `<article class="biz s-${tr.status} ${due ? 'due' : ''}" data-id="${esc(b.id)}">
+    <div class="head">
+      <span class="name">${esc(b.name)}</span>
+      <span class="tag ${b.type}">${typeLabel}</span>
+      ${b.listed ? '<span class="tag src">on maps</span>' : ''}
+      ${b.custom ? '<span class="tag src">added by you</span>' : ''}
+      ${b.employees ? `<span class="tag src">${b.employees} staff</span>` : ''}
+    </div>
+    <div class="meta">
+      ${b.legal ? esc(b.legal) + ' · ' : ''}${esc(b.address || 'Viti')}
+      ${b.phone ? ' · ' + esc(fmtPhone(b.phone)) : ''}${b.email ? ' · ' + esc(b.email) : ''}
+      ${b.source ? ` · <a href="${esc(b.source)}" target="_blank" rel="noopener">source</a>` : ''}
+    </div>
+    <div class="actions">
+      <a class="btn wa ${wa ? '' : 'off'}" href="${wa || '#'}" target="_blank" rel="noopener" data-act="messaged">WhatsApp</a>
+      <a class="btn call ${b.phone ? '' : 'off'}" href="${b.phone ? 'tel:' + b.phone : '#'}" data-act="called">Call</a>
+      <a class="btn mail ${mail ? '' : 'off'}" href="${mail || '#'}" data-act="messaged">Email</a>
+      <button class="copy">Copy message</button>
+      <a class="btn" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">Maps</a>
+      <a class="btn" href="https://www.facebook.com/search/top?q=${q}" target="_blank" rel="noopener">Facebook</a>
+      <a class="btn" href="https://www.google.com/search?q=${encodeURIComponent('site:instagram.com ' + shortName(b.name) + ' Viti')}" target="_blank" rel="noopener">Instagram</a>
+    </div>
+    <div class="track">
+      <select class="status">${STATUSES.map(([v, l]) => `<option value="${v}" ${tr.status === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+      <input class="ig" type="text" placeholder="@instagram" value="${esc(tr.ig || b.ig || '')}" />
+      <input class="note" type="text" placeholder="Note (who you spoke to, what they said)" value="${esc(tr.note || '')}" />
+      <span class="when ${due ? 'due' : ''}">${tr.date ? 'last ' + tr.date : ''}${tr.followUp && tr.status === 'messaged' ? ' · follow up ' + tr.followUp : ''}</span>
+    </div>
+  </article>`;
+}
+
+function setStatus(id, status) {
+  const tr = { ...t(id), status, date: today() };
+  if (status === 'messaged') tr.followUp = addDays(today(), FOLLOW_UP_DAYS);
+  if (status === 'todo') { delete tr.date; delete tr.followUp; }
+  state.track[id] = tr;
+  save();
+}
+
+function renderToday() {
+  const all = allBusinesses();
+  const contactedToday = Object.values(state.track).filter((x) => x.date === today() && x.status !== 'todo').length;
+  const due = all.filter(isDue).length;
+  const left = all.filter((b) => t(b.id).status === 'todo').length;
+  const done = contactedToday >= BATCH;
+  document.getElementById('today').innerHTML = `
+    <h2>TODAY · ${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
+    <div class="big">${done ? '<b>Batch done.</b> ' : ''}${contactedToday}/${BATCH} businesses contacted today</div>
+    <p>${due ? `<b style="color:var(--warn)">${due} follow-up${due > 1 ? 's' : ''} due</b> · ` : ''}${left} not contacted yet. ${done ? 'Spend the rest of the day onboarding anyone who said yes.' : 'Work top to bottom: food places first, the biggest ones first.'}</p>`;
+}
+
+function renderStats() {
+  const all = allBusinesses();
+  const count = (list) => all.filter((b) => list.includes(t(b.id).status)).length;
+  document.getElementById('s-all').textContent = all.length;
+  document.getElementById('s-contacted').textContent = all.length - count(['todo']);
+  document.getElementById('s-replied').textContent = count(['replied', 'interested', 'joined']);
+  document.getElementById('s-interested').textContent = count(['interested', 'joined']);
+  document.getElementById('s-joined').textContent = count(['joined']);
+  const reg = (window.VND_PARTNERS || []).length;
+  document.getElementById('sub').textContent = `${all.length} food places and markets in Viti (${reg} from the business register) · free to join · saved in this browser`;
+}
+
+function render() {
+  renderToday();
+  renderStats();
+  const list = allBusinesses().filter(matches);
+  const el = document.getElementById('list');
+  el.innerHTML = list.length ? list.slice(0, shown).map(card).join('') : '<div class="empty">Nothing here. Change the filter.</div>';
+  document.getElementById('more').hidden = list.length <= shown;
+  document.getElementById('more').textContent = `Show more (${list.length - shown} left)`;
+}
+
+document.getElementById('list').addEventListener('click', async (e) => {
+  const art = e.target.closest('.biz');
+  if (!art) return;
+  const b = allBusinesses().find((x) => x.id === art.dataset.id);
+  if (e.target.matches('.copy')) {
+    await navigator.clipboard.writeText(messageFor(b));
+    e.target.textContent = 'Copied';
+    setTimeout(() => (e.target.textContent = 'Copy message'), 1200);
+  }
+  const act = e.target.closest('a[data-act]');
+  if (act && !act.classList.contains('off')) {
+    const s = t(b.id).status;
+    if (s === 'todo') setStatus(b.id, 'messaged');
+    else if (s === 'messaged') setStatus(b.id, 'followed');
+    setTimeout(render, 300);
+  }
+});
+
+document.getElementById('list').addEventListener('change', (e) => {
+  const art = e.target.closest('.biz');
+  if (!art) return;
+  const id = art.dataset.id;
+  if (e.target.matches('.status')) { setStatus(id, e.target.value); render(); }
+  if (e.target.matches('.note')) { state.track[id] = { ...t(id), note: e.target.value }; save(); }
+  if (e.target.matches('.ig')) { state.track[id] = { ...t(id), ig: e.target.value }; save(); }
+});
+
+document.querySelectorAll('[data-type]').forEach((btn) => btn.addEventListener('click', () => {
+  document.querySelectorAll('[data-type]').forEach((x) => x.classList.toggle('on', x === btn));
+  typeFilter = btn.dataset.type;
+  shown = 30;
+  render();
+}));
+document.getElementById('status-filter').addEventListener('change', () => { shown = 30; render(); });
+document.getElementById('q').addEventListener('input', () => { shown = 30; render(); });
+document.getElementById('more').addEventListener('click', () => { shown += 30; render(); });
+
+const TPL_FIELDS = { first: 'tpl-first', follow: 'tpl-follow', visit: 'tpl-visit' };
+function fillEditors() {
+  for (const [key, id] of Object.entries(TPL_FIELDS)) document.getElementById(id).value = tpl(key);
+}
+let tplTimer;
+for (const [key, id] of Object.entries(TPL_FIELDS)) {
+  document.getElementById(id).addEventListener('input', (e) => {
+    state.tpl = { ...state.tpl, [key]: e.target.value };
+    save();
+    document.getElementById('tpl-saved').textContent = 'Saved';
+    clearTimeout(tplTimer);
+    tplTimer = setTimeout(() => { document.getElementById('tpl-saved').textContent = ''; render(); }, 600);
+  });
+}
+document.getElementById('tpl-reset').addEventListener('click', () => {
+  if (!confirm('Put back the original text for all three messages?')) return;
+  state.tpl = {};
+  save();
+  fillEditors();
+  render();
+});
+fillEditors();
+
+const dlg = document.getElementById('add-dialog');
+document.getElementById('add').addEventListener('click', () => dlg.showModal());
+dlg.addEventListener('close', () => {
+  const form = document.getElementById('add-form');
+  if (dlg.returnValue === 'ok') {
+    const f = Object.fromEntries(new FormData(form));
+    const digits = f.phone.replace(/\D/g, '');
+    const phone = !digits ? '' : digits.startsWith('383') ? '+' + digits : digits.startsWith('0') ? '+383' + digits.slice(1) : '+' + digits;
+    state.custom.unshift({ id: 'custom-' + Date.now(), name: f.name.trim(), type: f.type, phone, address: f.address.trim(), ig: f.ig.trim(), custom: true });
+    save();
+    render();
+  }
+  form.reset();
+});
+
+document.getElementById('export').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' }));
+  a.download = `vnd-partners-${today()}.json`;
+  a.click();
+});
+document.getElementById('import').addEventListener('click', () => document.getElementById('import-file').click());
+document.getElementById('import-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try { state = { track: {}, custom: [], tpl: {}, ...JSON.parse(await file.text()) }; save(); fillEditors(); render(); }
+  catch { alert('That file is not a VND partners backup.'); }
+});
+
+render();
+</script>
+</body>
+</html>

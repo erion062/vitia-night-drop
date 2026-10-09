@@ -1,0 +1,101 @@
+{
+  "checkedAt": "2026-10-04T20:10:56.192Z",
+  "source": "https://vndviti.com/api/products",
+  "duration": 36,
+  "voice": "sq-AL-AnilaNeural",
+  "syntheticVoice": true,
+  "partners": [
+    {
+      "slug": "lacasa",
+      "name": "Pizza La Casa",
+      "tagline": "Pica, sandviçe, hamburger, skarë",
+      "kind": "restaurant",
+      "logo": "video-ads/partner-assets/lacasa-logo.jpg",
+      "photo": "video-ads/partner-assets/lacasa-food.jpg",
+      "productName": "Pizza Margarita (30cm)",
+      "publicProductCount": 88
+    },
+    {
+      "slug": "amici",
+      "name": "Amici Lounge & Bar",
+      "tagline": "Pica, pasta, sandwich, burger, krepë",
+      "kind": "restaurant",
+      "logo": "video-ads/partner-assets/amici-logo.jpg",
+      "photo": "video-ads/partner-assets/amici-food.jpg",
+      "productName": "Pasta Carbonara",
+      "publicProductCount": 66
+    },
+    {
+      "slug": "andi",
+      "name": "Andi Market",
+      "tagline": "Market · pije, ushqim, shtëpi",
+      "kind": "market",
+      "logo": "video-ads/partner-assets/andi-logo.svg",
+      "photo": null,
+      "productName": null,
+      "publicProductCount": 0
+    }
+  ],
+  "scenes": [
+    {
+      "speech": "Partnerët e tu në Viti. Tani në Vitia Najt Drop.",
+      "captions": [
+        "Partnerët e tu në Viti.",
+        "Tani në Vitia Night Drop."
+      ],
+      "start": 0.3,
+      "file": "video-ads/05-voice-1.wav",
+      "duration": 4.442667
+    },
+    {
+      "speech": "Pica La Kasa. Pica, sanduiçe dhe hamburgerë. Zgjidh shijen tënde.",
+      "captions": [
+        "Pizza La Casa. Pica, sanduiçe dhe",
+        "hamburgerë. Zgjidh shijen tënde."
+      ],
+      "start": 6.3,
+      "file": "video-ads/05-voice-2.wav",
+      "duration": 5.435417
+    },
+    {
+      "speech": "Amiçi Launxh end Bar. Pica, pasta dhe krepa. Ti zgjedh.",
+      "captions": [
+        "Amici Lounge & Bar. Pica, pasta",
+        "dhe krepa. Ti zgjedh."
+      ],
+      "start": 12.3,
+      "file": "video-ads/05-voice-3.wav",
+      "duration": 5.432958
+    },
+    {
+      "speech": "Andi Market. Një tjetër partner në platformën Vitia Najt Drop.",
+      "captions": [
+        "Andi Market. Një tjetër partner",
+        "në platformën Vitia Night Drop."
+      ],
+      "start": 18.3,
+      "file": "video-ads/05-voice-4.wav",
+      "duration": 5.162667
+    },
+    {
+      "speech": "Hap faqen, zgjidh partnerin dhe porosit. Ndiqe porosinë nga telefoni.",
+      "captions": [
+        "Hap faqen, zgjidh partnerin dhe porosit.",
+        "Ndiqe porosinë nga telefoni."
+      ],
+      "start": 24.3,
+      "file": "video-ads/05-voice-5.wav",
+      "duration": 5.431292
+    },
+    {
+      "speech": "Ne dalim për ty. Porosit në vi en di viti, pikë kom.",
+      "captions": [
+        "Ne dalim për ty.",
+        "Porosit në vndviti.com."
+      ],
+      "start": 30.3,
+      "file": "video-ads/05-voice-6.wav",
+      "duration": 3.914667
+    }
+  ]
+}
