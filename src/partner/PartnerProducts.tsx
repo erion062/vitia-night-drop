@@ -6,18 +6,21 @@ import { euro } from '../lib/format';
 import { useConfig } from '../state/config';
 import type { Category, Partner, Product } from '../types';
 
-const EMPTY: Product = {
-  id: 0,
-  name: '',
-  description: '',
-  category: 'other',
-  price_cents: 0,
-  image_url: '',
-  accent: '#00FF66',
-  available: true,
-  popular: false,
-  section: 'Market',
-};
+function emptyProduct(shop: Partner | null): Product {
+  const bakery = shop?.kind === 'bakery';
+  return {
+    id: 0,
+    name: '',
+    description: '',
+    category: bakery ? 'food' : 'other',
+    price_cents: 0,
+    image_url: '',
+    accent: bakery ? '#C4A35A' : '#00FF66',
+    available: true,
+    popular: false,
+    section: bakery ? 'Bukë' : shop?.kind === 'restaurant' ? 'Menu' : 'Market',
+  };
+}
 
 async function resizeImage(file: File): Promise<string> {
   const bmp = await createImageBitmap(file);
@@ -182,10 +185,12 @@ export default function PartnerProducts() {
     <div className="adm-page">
       <div className="adm-page-head">
         <div>
-          <h1>{shop?.name || 'Andi Market'}</h1>
-          <p className="muted">Shto, ndrysho ose fshi produktet e tua. Klientët i shohin te vndviti.com/p/andi. Çmimi që shkruan këtu është çmimi që paguan klienti — VND ta paguan ty të njëjtën shumë kur vjen për ta marrë.</p>
+          <h1>{shop?.name || 'Produktet'}</h1>
+          <p className="muted">
+            Shto, ndrysho ose fshi produktet e tua. Klientët i shohin te vndviti.com/p/{shop?.slug || '…'}. Çmimi që shkruan këtu është çmimi që paguan klienti — VND ta paguan ty të njëjtën shumë kur vjen për ta marrë.
+          </p>
         </div>
-        <button className="btn btn-primary" onClick={() => setEditing(EMPTY)}>
+        <button className="btn btn-primary" onClick={() => setEditing(emptyProduct(shop))}>
           <Icon name="plus" size={18} /> Shto produkt
         </button>
       </div>

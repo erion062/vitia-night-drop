@@ -2,8 +2,10 @@
 /**
  * Adds partner bakery Furra Sofra from their price list
  * (Artikujt Sofra SHPK.xlsx, Oct 2026). Sale price = pickup cost.
- * Photos are the files they sent in Desktop/FurraSofra — not internet stock.
+ * WhatsApp files from Desktop/FurraSofra plus Commons fills for items
+ * they did not photograph. Bukë is a loaf — not the milk bun they sent.
  *   node scripts/import-sofra.mjs
+ *   node scripts/import-sofra.mjs --user-photos
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -27,7 +29,6 @@ const PARTNER = {
 };
 
 const PHOTOS = {
-  buke: 'WhatsApp Image 2026-10-09 at 2.53.06 PM (3).jpeg',
   'buke-thekre': 'WhatsApp Image 2026-10-09 at 2.53.07 PM.jpeg',
   'buke-misri': 'WhatsApp Image 2026-10-09 at 2.53.14 PM.jpeg',
   gjevrek: 'WhatsApp Image 2026-10-09 at 2.53.11 PM.jpeg',
@@ -40,6 +41,24 @@ const PHOTOS = {
   'tortilla-pule': 'WhatsApp Image 2026-10-09 at 2.53.06 PM (1).jpeg',
   'pizza-pjese': 'WhatsApp Image 2026-10-09 at 2.53.17 PM.jpeg',
   gurubija: 'WhatsApp Image 2026-10-09 at 2.53.06 PM (9).jpeg',
+  mantija: 'WhatsApp Image 2026-10-09 at 2.53.06 PM (5).jpeg',
+};
+
+/** Photos they dropped in Desktop/FurraSofra after the first import. */
+const USER_PHOTOS = {
+  'burek-mish': 'burekmemish.png',
+  'burek-gjiz': 'burekmegjiz.png',
+  flija: 'flija.jfif',
+  'tortilla-proshute': 'tortillameporshute.jfif',
+  'kifle-virshlle': 'kiflemevishlle.jfif',
+  'lesnato-gjize': 'Lisnatomegjiz.png',
+};
+
+/** Commons fills still used until they send a replacement. No ayran/jogurta. */
+const LOCAL_PHOTOS = {
+  buke: 'sofra-weissbrot.jpg',
+  'bufle-qoko': 'sofra-bufle-qoko.jpg',
+  'tost-pule': 'sofra-tost-pule.jpg',
 };
 
 const item = (section, name, price, photo, description = '', popular = false) => ({
@@ -56,30 +75,39 @@ const MENU = [
   item('Bukë', 'Buke Thekre', 0.6, 'buke-thekre'),
   item('Bukë', 'Bukë Misri', 1.5, 'buke-misri'),
   item('Bukë', 'Krelan Misri', 1.5, 'buke-misri'),
-  item('Burek', 'Burek me Mish', 1.5, '', '', true),
-  item('Burek', 'Burek me Gjiz', 1.5, ''),
-  item('Burek', 'Mantija me Mish', 0.2, ''),
-  item('Burek', 'Mantija me Gjize', 0.2, ''),
+  item('Burek', 'Burek me Mish', 1.5, 'burek-mish', '', true),
+  item('Burek', 'Burek me Gjiz', 1.5, 'burek-gjiz'),
+  item('Burek', 'Mantija me Mish', 0.2, 'mantija'),
+  item('Burek', 'Mantija me Gjize', 0.2, 'mantija'),
   item('Kifle & ëmbëlsira', 'Gjevrek', 0.3, 'gjevrek'),
-  item('Kifle & ëmbëlsira', 'Kifle me Virshlle', 0.5, ''),
+  item('Kifle & ëmbëlsira', 'Kifle me Virshlle', 0.5, 'kifle-virshlle'),
   item('Kifle & ëmbëlsira', 'Kifle te thjeshta', 0.25, 'kifle-thjeshta'),
   item('Kifle & ëmbëlsira', 'Kifle me gjizë', 0.5, 'kifle-gjize'),
   item('Kifle & ëmbëlsira', 'Kroasan me qoko', 0.7, 'kroasan-qoko'),
   item('Kifle & ëmbëlsira', 'Kroasan i thatë', 0.7, 'kroasan-thate'),
   item('Kifle & ëmbëlsira', 'Lesnato me vishnje', 0.7, 'lesnato-vishnje'),
-  item('Kifle & ëmbëlsira', 'Lesnato me gjizë', 0.7, ''),
-  item('Kifle & ëmbëlsira', 'Bufle me qoko', 0.5, ''),
+  item('Kifle & ëmbëlsira', 'Lesnato me gjizë', 0.7, 'lesnato-gjize'),
+  item('Kifle & ëmbëlsira', 'Bufle me qoko', 0.5, 'bufle-qoko'),
   item('Kifle & ëmbëlsira', 'Gurubija', 0.5, 'gurubija'),
   item('Pizza', 'Pizza me Pjese', 1, 'pizza-pjese', '', true),
   item('Pizza', 'Pizza 40 cm', 8, 'pizza-pjese'),
   item('Sandwich', 'Tost Proshutë', 1, 'tost-proshute'),
-  item('Sandwich', 'Tost Pule', 1.5, ''),
+  item('Sandwich', 'Tost Pule', 1.5, 'tost-pule'),
   item('Sandwich', 'Tortilla me mish pule', 1.5, 'tortilla-pule'),
-  item('Sandwich', 'Tortilla me proshutë', 1.5, 'tost-proshute'),
-  item('Tradicionale', 'Flija', 1.5, '', '', true),
+  item('Sandwich', 'Tortilla me proshutë', 1.5, 'tortilla-proshute'),
+  item('Tradicionale', 'Flija', 1.5, 'flija', '', true),
   item('Pije', 'Ayran 0.180 L', 0.3, '', '', false),
   item('Pije', 'Jogurta 0.180 L', 0.3, ''),
 ];
+
+function destFile(key, srcFile) {
+  const ext = path.extname(srcFile).toLowerCase() === '.png' ? '.png' : '.jpg';
+  return path.join(UPLOADS, `sofra-${key}${ext}`);
+}
+
+function mimeOf(file) {
+  return path.extname(file).toLowerCase() === '.png' ? 'image/png' : 'image/jpeg';
+}
 
 function copyPhotos() {
   fs.mkdirSync(UPLOADS, { recursive: true });
@@ -87,11 +115,32 @@ function copyPhotos() {
   else console.warn('logo missing: ' + LOGO_SRC);
   for (const [key, file] of Object.entries(PHOTOS)) {
     const src = path.join(PHOTO_DIR, file);
-    const dest = path.join(UPLOADS, `sofra-${key}.jpg`);
+    const dest = destFile(key, file);
     if (!fs.existsSync(src)) {
       console.warn(`photo missing: ${file}`);
       continue;
     }
+    fs.copyFileSync(src, dest);
+  }
+  for (const [key, file] of Object.entries(USER_PHOTOS)) {
+    const src = path.join(PHOTO_DIR, file);
+    if (!fs.existsSync(src)) {
+      console.warn(`photo missing: ${file}`);
+      continue;
+    }
+    fs.copyFileSync(src, destFile(key, file));
+  }
+}
+
+function ensureLocalPhotos() {
+  for (const [key, file] of Object.entries(LOCAL_PHOTOS)) {
+    const dest = path.join(UPLOADS, `sofra-${key}.jpg`);
+    const src = path.join(UPLOADS, file);
+    if (!fs.existsSync(src)) {
+      console.warn(`photo missing: ${file}`);
+      continue;
+    }
+    if (path.resolve(src) === path.resolve(dest)) continue;
     fs.copyFileSync(src, dest);
   }
 }
@@ -131,7 +180,8 @@ function importMenu() {
     MENU.forEach((m, i) => {
       const cents = Math.round(m.price * 100);
       const category = m.section === 'Pije' ? 'drinks' : 'food';
-      const photo = m.photo && fs.existsSync(path.join(UPLOADS, `sofra-${m.photo}.jpg`)) ? `/uploads/sofra-${m.photo}.jpg` : '';
+      const photoFile = m.photo && ['.jpg', '.png'].map((ext) => path.join(UPLOADS, `sofra-${m.photo}${ext}`)).find((p) => fs.existsSync(p));
+      const photo = photoFile ? `/uploads/${path.basename(photoFile)}` : '';
       const popular = m.popular ? 1 : 0;
       const existing = find.get(PARTNER.slug, m.name);
       if (existing) update.run(m.description, category, cents, cents, photo, '#C4A35A', popular, sortBase + i, m.section, now, existing.id);
@@ -212,8 +262,122 @@ async function importLive() {
   console.log(`${PARTNER.name}: added ${added} products on vndviti.com`);
 }
 
+async function liveApi() {
+  const { phone, password } = liveAdmin();
+  const jar = [];
+  async function api(pathname, opts = {}) {
+    const res = await fetch('https://vndviti.com/api' + pathname, {
+      method: opts.method || 'GET',
+      headers: {
+        ...(opts.body ? { 'content-type': 'application/json' } : {}),
+        cookie: jar.join('; '),
+      },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    for (const c of res.headers.getSetCookie?.() || []) jar.push(c.split(';')[0]);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(`${pathname} ${res.status} ${data.error || ''}`.trim());
+    return data;
+  }
+  await api('/auth/login', { method: 'POST', body: { phone, password } });
+  return api;
+}
+
+function photoSrc(key) {
+  const user = USER_PHOTOS[key];
+  if (user) {
+    const p = destFile(key, user);
+    if (fs.existsSync(p)) return p;
+    const orig = path.join(PHOTO_DIR, user);
+    if (fs.existsSync(orig)) return orig;
+  }
+  const jpg = path.join(UPLOADS, `sofra-${key}.jpg`);
+  const png = path.join(UPLOADS, `sofra-${key}.png`);
+  if (fs.existsSync(jpg)) return jpg;
+  if (fs.existsSync(png)) return png;
+  return '';
+}
+
+async function applyUserPhotosLive() {
+  const api = await liveApi();
+  const pub = await api('/products');
+  const byName = new Map((pub.products || []).filter((p) => p.partner === 'sofra').map((p) => [p.name, p]));
+  const uploaded = {};
+  for (const [key, file] of Object.entries(USER_PHOTOS)) {
+    const src = photoSrc(key) || path.join(PHOTO_DIR, file);
+    if (!fs.existsSync(src)) {
+      console.warn('skip missing', file);
+      continue;
+    }
+    const buf = fs.readFileSync(src);
+    if (buf.length > 2 * 1024 * 1024) {
+      console.warn('too large', key, buf.length);
+      continue;
+    }
+    const r = await api('/admin/uploads', {
+      method: 'POST',
+      body: { data: `data:${mimeOf(src)};base64,` + buf.toString('base64') },
+    });
+    uploaded[key] = r.url;
+    console.log('uploaded', key, r.url);
+  }
+  let updated = 0;
+  for (const m of MENU) {
+    const product = byName.get(m.name);
+    if (!product) continue;
+    if (m.name === 'Ayran 0.180 L' || m.name === 'Jogurta 0.180 L') {
+      await api(`/admin/products/${product.id}`, { method: 'PUT', body: { image_url: '' } });
+      updated += 1;
+      console.log('cleared', m.name);
+      continue;
+    }
+    const url = m.photo && uploaded[m.photo];
+    if (!url) continue;
+    await api(`/admin/products/${product.id}`, { method: 'PUT', body: { image_url: url } });
+    updated += 1;
+    console.log('photo', m.name, url);
+  }
+  console.log(`${PARTNER.name}: applied ${updated} live photo updates`);
+}
+
+async function fixPhotosLive() {
+  const api = await liveApi();
+  const pub = await api('/products');
+  const byName = new Map((pub.products || []).filter((p) => p.partner === 'sofra').map((p) => [p.name, p]));
+  const uploaded = {};
+  const keys = [...new Set(MENU.map((m) => m.photo).filter(Boolean))];
+  for (const key of keys) {
+    const src = path.join(UPLOADS, `sofra-${key}.jpg`);
+    if (!fs.existsSync(src)) {
+      console.warn('skip missing', key);
+      continue;
+    }
+    const buf = fs.readFileSync(src);
+    if (buf.length > 2 * 1024 * 1024) {
+      console.warn('too large', key, buf.length);
+      continue;
+    }
+    const r = await api('/admin/uploads', { method: 'POST', body: { data: 'data:image/jpeg;base64,' + buf.toString('base64') } });
+    uploaded[key] = r.url;
+    console.log('uploaded', key, r.url);
+  }
+  let updated = 0;
+  for (const m of MENU) {
+    const product = byName.get(m.name);
+    const url = m.photo && uploaded[m.photo];
+    if (!product || !url) continue;
+    await api(`/admin/products/${product.id}`, { method: 'PUT', body: { image_url: url } });
+    updated += 1;
+    console.log('photo', m.name, url);
+  }
+  console.log(`${PARTNER.name}: updated photos on ${updated} live products`);
+}
+
 copyPhotos();
-if (process.argv.includes('--live')) await importLive();
+ensureLocalPhotos();
+if (process.argv.includes('--user-photos')) await applyUserPhotosLive();
+else if (process.argv.includes('--fix-photos')) await fixPhotosLive();
+else if (process.argv.includes('--live')) await importLive();
 else {
   await import('../server/db.js');
   importMenu();

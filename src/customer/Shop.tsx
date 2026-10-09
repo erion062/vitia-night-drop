@@ -8,10 +8,11 @@ import { useConfig } from '../state/config';
 import type { Category } from '../types';
 import { TopBar } from './CustomerLayout';
 import { productWord } from './copy';
+import { VenueCard } from './PartnerPage';
 import { ProductRow } from './ProductRow';
 
 export default function Shop() {
-  const { products, error, refreshConfig, refreshProducts } = useConfig();
+  const { config, products, partners, error, refreshConfig, refreshProducts } = useConfig();
   const { count, subtotal_cents } = useCart();
   const [params, setParams] = useSearchParams();
   const cat = (params.get('cat') || 'all') as Category | 'all';
@@ -48,6 +49,17 @@ export default function Shop() {
           </button>
         ))}
       </div>
+
+      {!q && cat === 'all' && partners.length > 0 && (
+        <section>
+          <h2 className="section-title">Restorantet dhe dyqanet</h2>
+          <div className="venue-list">
+            {partners.map((p) => (
+              <VenueCard key={p.slug} partner={p} products={products} deliveryFee={config?.delivery_fee_cents ?? 400} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {products.length === 0 ? (
         error ? (

@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { Icon } from '../components/Icon';
 import { Empty, ProductImage, QtyControl, Spinner } from '../components/ui';
 import { euro, euroShort } from '../lib/format';
 import { useCart } from '../state/cart';
@@ -14,15 +13,41 @@ import { ProductRow } from './ProductRow';
 const baseName = (name: string) => name.replace(/\s*\([^)]*\)$/, '');
 const variantLabel = (name: string) => name.match(/\(([^)]*)\)$/)?.[1] || name;
 
-export function PartnerTile({ partner }: { partner: Partner }) {
+export const KIND_SQ: Record<string, string> = {
+  bakery: 'Furra',
+  market: 'Market',
+  restaurant: 'Restorant',
+};
+
+export function partnerCover(partner: Partner, products: Product[]) {
+  const own = products.filter((p) => p.partner === partner.slug && p.image_url);
+  return own.find((p) => p.popular)?.image_url || own[0]?.image_url || partner.logo_url;
+}
+
+export function VenueCard({
+  partner,
+  products,
+  deliveryFee,
+}: {
+  partner: Partner;
+  products: Product[];
+  deliveryFee: number;
+}) {
+  const cover = partnerCover(partner, products);
+  const coverIsLogo = !cover || cover === partner.logo_url;
+  const kind = KIND_SQ[partner.kind || ''] || 'Partner';
   return (
-    <Link to={`/p/${partner.slug}`} className="partner-tile">
-      {partner.logo_url ? <img src={partner.logo_url} alt="" className="partner-tile-logo" /> : <Icon name="bag" size={26} />}
-      <div>
-        <b>{partner.name}</b>
-        <span>{partner.tagline}</span>
+    <Link to={`/p/${partner.slug}`} className="venue-card partner-tile">
+      <div className={`venue-cover${coverIsLogo ? ' logo-only' : ''}`}>
+        {cover ? <img src={cover} alt="" /> : null}
+        {partner.logo_url && !coverIsLogo && <img src={partner.logo_url} alt="" className="venue-logo" />}
+        <em className="venue-kind">{kind}</em>
       </div>
-      <Icon name="right" size={16} className="cat-arrow" />
+      <div className="venue-body">
+        <b>{partner.name}</b>
+        <span>{partner.tagline || kind}</span>
+        <span className="venue-meta">Dorëzimi {euroShort(deliveryFee)} · Pagesa në dorëzim</span>
+      </div>
     </Link>
   );
 }
@@ -103,18 +128,29 @@ export default function PartnerPage() {
     else next.set('s', s);
     setParams(next, { replace: true });
   };
+  const cover = partnerCover(partner, products);
+  const coverIsLogo = !cover || cover === partner.logo_url;
+  const kind = KIND_SQ[partner.kind || ''] || 'Partner';
+  const fee = config?.delivery_fee_cents ?? 400;
 
   return (
     <div className="page partner-page">
       <TopBar back title={partner.name} />
-      <section className="partner-hero">
-        {partner.logo_url && <img src={partner.logo_url} alt={partner.name} className="partner-logo" />}
-        <div>
-          <h2>{partner.name}</h2>
-          <p>{partner.tagline}</p>
-          <p className="partner-meta">
-            E sjell VND · Dorëzimi {euroShort(config?.delivery_fee_cents ?? 400)} · Pagesa në dorëzim
-          </p>
+      <section className="venue-hero">
+        <div className={`venue-hero-cover${coverIsLogo ? ' logo-only' : ''}`}>
+          {cover ? <img src={cover} alt="" /> : null}
+        </div>
+        <div className="venue-hero-body">
+          {partner.logo_url && <img src={partner.logo_url} alt={partner.name} className="venue-hero-logo" />}
+          <div>
+            <h2>{partner.name}</h2>
+            <p>{partner.tagline || kind}</p>
+            <div className="venue-pills">
+              <span>E sjell VND</span>
+              <span className="ghost">Dorëzimi {euroShort(fee)}</span>
+              <span className="ghost">Pagesa në dorëzim</span>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -12,7 +12,7 @@ import { useConfig } from '../state/config';
 import type { Category, CustomerOrder } from '../types';
 import { StatusPill, TopBar } from './CustomerLayout';
 import { SQ_STATUS, heroPitch, productWord, reasonTitle } from './copy';
-import { PartnerTile } from './PartnerPage';
+import { VenueCard } from './PartnerPage';
 import { ProductCard } from './ProductRow';
 
 export default function Home() {
@@ -93,10 +93,10 @@ export default function Home() {
 
       {partners.length > 0 && (
         <section>
-          <h2 className="section-title">Partnerët në VND</h2>
-          <div className="partner-strip">
+          <h2 className="section-title">Restorantet dhe dyqanet</h2>
+          <div className="venue-list">
             {partners.map((p) => (
-              <PartnerTile key={p.slug} partner={p} />
+              <VenueCard key={p.slug} partner={p} products={products} deliveryFee={config?.delivery_fee_cents ?? 400} />
             ))}
           </div>
         </section>

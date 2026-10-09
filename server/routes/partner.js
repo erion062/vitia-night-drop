@@ -40,7 +40,7 @@ function productInput(b, partial = false) {
   const has = (k) => b[k] !== undefined;
   if (!partial || has('name')) out.name = str(b.name, { min: 1, max: 80, field: 'Emri', lang: 'sq' });
   if (!partial || has('description')) out.description = str(b.description, { max: 200, field: 'Përshkrimi', optional: true, lang: 'sq' });
-  if (!partial || has('section')) out.section = str(b.section, { max: 40, field: 'Seksioni', optional: true, lang: 'sq' }) || 'Market';
+  if (!partial || has('section')) out.section = str(b.section, { max: 40, field: 'Seksioni', optional: true, lang: 'sq' }) || '';
   if (!partial || has('category')) {
     if (!CATEGORIES.includes(b.category)) throw new HttpError(400, 'Kategori e pavlefshme');
     out.category = b.category;
@@ -77,7 +77,7 @@ router.post('/products', (req, res) => {
       p.available ?? 1,
       maxSort + 1,
       req.user.partner,
-      p.section || 'Market',
+      p.section || '',
       now,
       now,
     );
@@ -119,7 +119,8 @@ router.post('/uploads', (req, res) => {
   if (!m) throw new HttpError(400, 'Ngarko një foto JPEG, PNG ose WebP');
   const buf = Buffer.from(m[2], 'base64');
   if (buf.length > 2 * 1024 * 1024) throw new HttpError(400, 'Fotoja është shumë e madhe (max 2 MB)');
-  const name = `andi-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.${m[1] === 'jpeg' ? 'jpg' : m[1]}`;
+  const slug = String(req.user.partner || 'partner').replace(/[^\w-]/g, '') || 'partner';
+  const name = `${slug}-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.${m[1] === 'jpeg' ? 'jpg' : m[1]}`;
   fs.writeFileSync(path.join(config.uploadsDir, name), buf);
   res.status(201).json({ url: `/uploads/${name}` });
 });

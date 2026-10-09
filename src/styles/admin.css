@@ -19,6 +19,16 @@
 .adm-brand {
   padding: 4px 8px 12px;
 }
+.adm-brand-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: contain;
+  background: #fff;
+  padding: 4px;
+  display: block;
+  margin-bottom: 10px;
+}
 .adm-brand .logo {
   align-items: flex-start;
 }
