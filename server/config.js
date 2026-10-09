@@ -69,12 +69,19 @@ if (persistDir) {
     path.join(ROOT, 'data', 'vnd.db'),
     path.resolve(ROOT, '..', 'previous', 'nodejs', 'data', 'vnd.db'),
     path.resolve(ROOT, '..', '..', 'previous', 'nodejs', 'data', 'vnd.db'),
+    path.join(domainRoot, 'hbuilds', 'last-source', 'data', 'vnd.db'),
     path.join(domainRoot, 'hbuilds', 'previous', 'nodejs', 'data', 'vnd.db'),
     path.join(domainRoot, 'hbuilds', 'current', 'nodejs', 'data', 'vnd.db'),
     path.join(domainRoot, 'data', 'vnd.db'),
     path.join(domainRoot, 'nodejs', 'data', 'vnd.db'),
     path.join(domainRoot, 'public_html', 'data', 'vnd.db'),
   );
+  const versionsDir = path.join(domainRoot, 'hbuilds', 'versions');
+  if (fs.existsSync(versionsDir)) {
+    for (const name of fs.readdirSync(versionsDir)) {
+      dbCandidates.push(path.join(versionsDir, name, 'nodejs', 'data', 'vnd.db'));
+    }
+  }
   for (const src of dbCandidates) {
     if (copyDbIfMissing(src, dbPath)) {
       console.warn(`[vnd] Copied existing shop database to ${dbPath} so Git deploys will not wipe it.`);
@@ -87,12 +94,18 @@ if (persistDir) {
     path.join(ROOT, 'data', 'uploads'),
     path.resolve(ROOT, '..', 'previous', 'nodejs', 'data', 'uploads'),
     path.resolve(ROOT, '..', '..', 'previous', 'nodejs', 'data', 'uploads'),
+    path.join(domainRoot, 'hbuilds', 'last-source', 'data', 'uploads'),
     path.join(domainRoot, 'hbuilds', 'previous', 'nodejs', 'data', 'uploads'),
     path.join(domainRoot, 'hbuilds', 'current', 'nodejs', 'data', 'uploads'),
     path.join(domainRoot, 'data', 'uploads'),
     path.join(domainRoot, 'nodejs', 'data', 'uploads'),
     path.join(domainRoot, 'public_html', 'data', 'uploads'),
   );
+  if (fs.existsSync(versionsDir)) {
+    for (const name of fs.readdirSync(versionsDir)) {
+      uploadCandidates.push(path.join(versionsDir, name, 'nodejs', 'data', 'uploads'));
+    }
+  }
   for (const src of uploadCandidates) {
     if (copyUploadsIfEmpty(src, uploadsDir)) {
       console.warn(`[vnd] Copied existing product photos to ${uploadsDir}.`);
