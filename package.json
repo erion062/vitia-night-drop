@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "description": "VITIA NIGHT DROP (VND) - late-night on-demand delivery PWA for Viti, Kosovo",
+  "main": "server/index.js",
   "type": "module",
   "engines": {
     "node": ">=22.13"

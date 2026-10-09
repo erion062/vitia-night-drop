@@ -10,12 +10,60 @@ if (fs.existsSync(envFile)) process.loadEnvFile(envFile);
 const env = process.env;
 const isProd = env.NODE_ENV === 'production';
 
+// Hostinger Git deploys live under hbuilds/current/nodejs and wipe that folder
+// on every push. Keep the shop database next to the domain, not inside the build.
+function hostingerPersistentDir() {
+  const n = ROOT.replace(/\\/g, '/');
+  const i = n.indexOf('/hbuilds/');
+  if (i === -1) return '';
+  return path.join(n.slice(0, i), 'persistent');
+}
+
+function copyFileIfMissing(src, dest) {
+  if (!src || src === dest || !fs.existsSync(src) || fs.existsSync(dest)) return false;
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.copyFileSync(src, dest);
+  return true;
+}
+
+function defaultDataDir() {
+  return hostingerPersistentDir() || path.join(ROOT, 'data');
+}
+
+const dataDir = defaultDataDir();
+const dbPath = env.DB_PATH ? path.resolve(ROOT, env.DB_PATH) : path.join(dataDir, 'vnd.db');
+const uploadsDir = env.UPLOADS_DIR ? path.resolve(ROOT, env.UPLOADS_DIR) : path.join(dataDir, 'uploads');
+
+if (hostingerPersistentDir() && !env.DB_PATH) {
+  const domainRoot = path.dirname(hostingerPersistentDir());
+  for (const rel of ['data/vnd.db', 'nodejs/data/vnd.db', 'public_html/data/vnd.db']) {
+    if (copyFileIfMissing(path.join(domainRoot, rel), dbPath)) {
+      for (const extra of ['-wal', '-shm']) {
+        copyFileIfMissing(path.join(domainRoot, rel) + extra, dbPath + extra);
+      }
+      console.warn(`[vnd] Copied existing shop database to ${dbPath} so Git deploys will not wipe it.`);
+      break;
+    }
+  }
+  const destUploads = uploadsDir;
+  if (!fs.existsSync(destUploads) || fs.readdirSync(destUploads).length === 0) {
+    for (const rel of ['data/uploads', 'nodejs/data/uploads', 'public_html/data/uploads']) {
+      const src = path.join(domainRoot, rel);
+      if (!fs.existsSync(src) || src === destUploads) continue;
+      fs.mkdirSync(destUploads, { recursive: true });
+      fs.cpSync(src, destUploads, { recursive: true });
+      console.warn(`[vnd] Copied existing product photos to ${destUploads}.`);
+      break;
+    }
+  }
+}
+
 export const config = {
   isProd,
   port: Number(env.PORT) || 8787,
   host: env.HOST || '0.0.0.0',
-  dbPath: path.resolve(ROOT, env.DB_PATH || 'data/vnd.db'),
-  uploadsDir: path.resolve(ROOT, env.UPLOADS_DIR || 'data/uploads'),
+  dbPath,
+  uploadsDir,
   distDir: path.join(ROOT, 'dist'),
   admin: {
     phone: env.ADMIN_PHONE || '',

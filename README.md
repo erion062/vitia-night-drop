@@ -94,9 +94,22 @@ Create `data/` and `data/uploads/` and make sure the Node process can write ther
 
 Start / restart the Node app in hPanel. Open `https://YOUR-DOMAIN` then `https://YOUR-DOMAIN/admin`.
 
-### Updates (GitHub — code only, database stays on Hostinger)
+### Updates (GitHub → Hostinger)
 
-The live shop (`data/vnd.db`, photos, `.env`) is **not** in GitHub. Pushing to GitHub never overwrites orders, customers, or Andi/VND products.
+Repo: https://github.com/erion062/vitia-night-drop  
+Live shop data is **not** in GitHub. Hostinger Git deploys replace the app build folder, so the database is kept in `persistent/` next to `hbuilds/` (orders, customers, photos stay).
+
+In hPanel, open the **existing** vndviti.com Node app (do not Add Website, do not delete the live site):
+
+1. Connect GitHub → `erion062/vitia-night-drop` → branch `main`.
+2. Deploy settings:
+   - Framework: **Express** (not Vite / React)
+   - Node.js: **22**
+   - Build command: `build`
+   - Entry file: `server/index.js`
+   - Output directory: leave empty
+3. Environment variables (import the live `.env` once): `NODE_ENV=production`, `ADMIN_PHONE`, `ADMIN_PASSWORD`, `ANDI_PHONE`, `ANDI_PASSWORD`, `ALLOWED_ORIGINS=https://vndviti.com,https://www.vndviti.com`, `COOKIE_SECURE=true`, `TRUST_PROXY=true`. Do not set `ENABLE_SIMULATION`.
+4. Deploy. After that, every `git push` to `main` rebuilds and restarts the app. Env vars persist.
 
 ```
 git add -A
@@ -104,25 +117,7 @@ git commit -m "your change"
 git push
 ```
 
-Then make a Hostinger zip from that same code (still no database inside):
-
-```
-npm run build
-npm run zip
-```
-
-That writes `vnd-update.zip` on the Desktop. It has the app code and `dist/` only — no database, no photos, no `.env`.
-
-1. Stop the Node app in hPanel.
-2. Download a copy of the live `data` folder (backup).
-3. Upload `vnd-update.zip` into the **same** app folder and extract / overwrite. Do not delete `data` or `.env`.
-4. Start the Node app.
-
-Do not use Hostinger’s “clone Git repo into an empty folder” for updates — that can replace the whole app directory. Keep using the code-only zip on top of the existing app.
-
-New tables (Visitors, partners, …) are created on start. Existing rows stay.
-
-`npm run zip:launch` is only for a first install or a deliberate full reset.
+`npm run zip` is still there as a manual fallback. `npm run zip:launch` is only for a first install or a deliberate full reset.
 
 ### 3. After it is live
 
