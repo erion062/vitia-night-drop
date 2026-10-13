@@ -46,7 +46,7 @@ export function VenueCard({
       <div className="venue-body">
         <b>{partner.name}</b>
         <span>{partner.tagline || kind}</span>
-        <span className="venue-meta">Dorëzimi {euroShort(deliveryFee)} · Pagesa në dorëzim</span>
+        <span className="venue-meta">Dorëzimi nga {euroShort(deliveryFee)} · Pagesa në dorëzim</span>
       </div>
     </Link>
   );
@@ -131,7 +131,7 @@ export default function PartnerPage() {
   const cover = partnerCover(partner, products);
   const coverIsLogo = !cover || cover === partner.logo_url;
   const kind = KIND_SQ[partner.kind || ''] || 'Partner';
-  const fee = config?.delivery_fee_cents ?? 400;
+  const fee = config?.delivery_fee_cents ?? 200;
 
   return (
     <div className="page partner-page">
@@ -147,7 +147,7 @@ export default function PartnerPage() {
             <p>{partner.tagline || kind}</p>
             <div className="venue-pills">
               <span>E sjell VND</span>
-              <span className="ghost">Dorëzimi {euroShort(fee)}</span>
+              <span className="ghost">Dorëzimi nga {euroShort(fee)}</span>
               <span className="ghost">Pagesa në dorëzim</span>
             </div>
           </div>

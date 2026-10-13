@@ -83,7 +83,7 @@ export default function Home() {
         <div>
           <Icon name="car" size={18} />
           <span>Dorëzimi</span>
-          <b>{euroShort(config?.delivery_fee_cents ?? 400)}</b>
+          <b>Nga {euroShort(config?.delivery_fee_cents ?? 200)}</b>
         </div>
       </div>
 
@@ -96,7 +96,7 @@ export default function Home() {
           <h2 className="section-title">Restorantet dhe dyqanet</h2>
           <div className="venue-list">
             {partners.map((p) => (
-              <VenueCard key={p.slug} partner={p} products={products} deliveryFee={config?.delivery_fee_cents ?? 400} />
+              <VenueCard key={p.slug} partner={p} products={products} deliveryFee={config?.delivery_fee_cents ?? 200} />
             ))}
           </div>
         </section>

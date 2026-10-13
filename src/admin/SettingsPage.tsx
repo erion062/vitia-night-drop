@@ -169,6 +169,8 @@ export default function SettingsPage() {
       open_time: settings.open_time,
       close_time: settings.close_time,
       delivery_fee: euroInput(settings.delivery_fee_cents),
+      delivery_inner_km: String(settings.delivery_inner_km ?? 3),
+      delivery_per_km: euroInput(settings.delivery_per_km_cents ?? 50),
       min_order: euroInput(settings.min_order_cents),
       max_active_orders: String(settings.max_active_orders),
       max_active_per_customer: String(settings.max_active_per_customer),
@@ -195,6 +197,8 @@ export default function SettingsPage() {
       open_time: v('open_time'),
       close_time: v('close_time'),
       delivery_fee_cents: toCents(v('delivery_fee')),
+      delivery_inner_km: parseFloat(v('delivery_inner_km')),
+      delivery_per_km_cents: toCents(v('delivery_per_km')),
       min_order_cents: toCents(v('min_order')),
       max_active_orders: parseInt(v('max_active_orders'), 10),
       max_active_per_customer: parseInt(v('max_active_per_customer'), 10),
@@ -255,8 +259,16 @@ export default function SettingsPage() {
               <input className="input" type="time" value={v('close_time')} onChange={set('close_time')} />
             </label>
             <label className="field">
-              <span className="field-label">Delivery fee (€)</span>
+              <span className="field-label">Delivery in Viti (€)</span>
               <input className="input" inputMode="decimal" value={v('delivery_fee')} onChange={set('delivery_fee')} />
+            </label>
+            <label className="field">
+              <span className="field-label">In-town radius (km)</span>
+              <input className="input" inputMode="decimal" value={v('delivery_inner_km')} onChange={set('delivery_inner_km')} />
+            </label>
+            <label className="field">
+              <span className="field-label">Extra per km outside Viti (€)</span>
+              <input className="input" inputMode="decimal" value={v('delivery_per_km')} onChange={set('delivery_per_km')} />
             </label>
             <label className="field">
               <span className="field-label">Minimum order (€)</span>

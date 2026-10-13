@@ -55,7 +55,7 @@ export default function Shop() {
           <h2 className="section-title">Restorantet dhe dyqanet</h2>
           <div className="venue-list">
             {partners.map((p) => (
-              <VenueCard key={p.slug} partner={p} products={products} deliveryFee={config?.delivery_fee_cents ?? 400} />
+              <VenueCard key={p.slug} partner={p} products={products} deliveryFee={config?.delivery_fee_cents ?? 200} />
             ))}
           </div>
         </section>

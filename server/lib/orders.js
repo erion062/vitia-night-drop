@@ -1,4 +1,5 @@
 import { db, tx } from '../db.js';
+import { quoteDeliveryFeeCents } from './delivery.js';
 import { getSettings } from './settings.js';
 import { isWithinHours } from './time.js';
 import { HttpError, haversineKm, int, normalizePhone, nowIso, num, str } from './util.js';
@@ -109,7 +110,7 @@ export function createOrder(user, body) {
       throw new HttpError(400, `Porosia minimale është €${(settings.min_order_cents / 100).toFixed(0)}`, 'MIN_ORDER');
     }
 
-    const fee = settings.delivery_fee_cents;
+    const fee = quoteDeliveryFeeCents(lat, lng, settings);
     const now = new Date();
     const createdAt = now.toISOString();
     const etaFrom = new Date(now.getTime() + 20 * 60e3).toISOString();

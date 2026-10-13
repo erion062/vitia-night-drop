@@ -14,7 +14,7 @@ export default function Basket() {
   const { user } = useAuth();
   const nav = useNavigate();
   const min = config?.min_order_cents ?? 1000;
-  const fee = config?.delivery_fee_cents ?? 400;
+  const fee = config?.delivery_fee_cents ?? 200;
   const missing = Math.max(0, min - cart.subtotal_cents);
   const blocked = config && !config.accepting_orders;
 
@@ -55,7 +55,7 @@ export default function Basket() {
       </div>
 
       <div className="card">
-        <Totals subtotal={cart.subtotal_cents} fee={fee} />
+        <Totals subtotal={cart.subtotal_cents} fee={fee} feeHint="në Viti, rritet me distancën" />
       </div>
 
       {missing > 0 ? (

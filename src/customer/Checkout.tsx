@@ -4,6 +4,7 @@ import { Icon } from '../components/Icon';
 import { ErrorBox, Field, Map, Totals } from '../components/ui';
 import { api, customerError } from '../lib/api';
 import { track } from '../lib/track';
+import { deliveryKm, quoteDeliveryFeeCents } from '../lib/delivery';
 import { distanceMeters } from '../lib/geo';
 import { euro, euroShort } from '../lib/format';
 import { useAuth } from '../state/auth';
@@ -40,7 +41,7 @@ export default function Checkout() {
   if (!user) return <Navigate to="/login?next=/checkout" replace />;
   if (cart.lines.length === 0 && !busy) return <Navigate to="/basket" replace />;
 
-  const fee = config?.delivery_fee_cents ?? 400;
+  const fee = quoteDeliveryFeeCents(pos, config);
   const min = config?.min_order_cents ?? 1000;
   const center = pos || { lat: config?.base_lat ?? 42.3214, lng: config?.base_lng ?? 21.3583 };
   const area = config ? { center: { lat: config.base_lat, lng: config.base_lng }, radiusKm: config.service_radius_km } : null;
@@ -182,7 +183,11 @@ export default function Checkout() {
               </div>
             ))}
           </div>
-          <Totals subtotal={cart.subtotal_cents} fee={fee} />
+          <Totals
+            subtotal={cart.subtotal_cents}
+            fee={fee}
+            feeHint={pos && config ? `${deliveryKm(pos, config).toFixed(1)} km` : 'në Viti, rritet me distancën'}
+          />
         </section>
 
         <ErrorBox>{error}</ErrorBox>

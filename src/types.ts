@@ -53,6 +53,8 @@ export interface PublicConfig {
   close_time: string;
   timezone: string;
   delivery_fee_cents: number;
+  delivery_inner_km: number;
+  delivery_per_km_cents: number;
   min_order_cents: number;
   max_active_orders: number;
   driver_name: string;
@@ -180,6 +182,8 @@ export interface Settings {
   open_time: string;
   close_time: string;
   delivery_fee_cents: number;
+  delivery_inner_km: number;
+  delivery_per_km_cents: number;
   min_order_cents: number;
   max_active_orders: number;
   max_active_per_customer: number;

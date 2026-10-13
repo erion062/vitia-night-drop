@@ -151,7 +151,19 @@ export function Timeline({ order, compact }: { order: TimelineOrder; compact?: b
   );
 }
 
-export function Totals({ subtotal, fee, discount = 0, discountLabel }: { subtotal: number; fee: number; discount?: number; discountLabel?: string }) {
+export function Totals({
+  subtotal,
+  fee,
+  discount = 0,
+  discountLabel,
+  feeHint,
+}: {
+  subtotal: number;
+  fee: number;
+  discount?: number;
+  discountLabel?: string;
+  feeHint?: string;
+}) {
   return (
     <div className="totals">
       <div>
@@ -159,7 +171,7 @@ export function Totals({ subtotal, fee, discount = 0, discountLabel }: { subtota
         <span>{euro(subtotal)}</span>
       </div>
       <div>
-        <span>Tarifa e dorëzimit</span>
+        <span>Tarifa e dorëzimit{feeHint ? ` · ${feeHint}` : ''}</span>
         <span>{euro(fee)}</span>
       </div>
       {discount > 0 && (

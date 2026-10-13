@@ -26,6 +26,8 @@ router.get('/config', (_req, res) => {
     close_time: s.close_time,
     timezone: 'Europe/Belgrade',
     delivery_fee_cents: s.delivery_fee_cents,
+    delivery_inner_km: s.delivery_inner_km,
+    delivery_per_km_cents: s.delivery_per_km_cents,
     min_order_cents: s.min_order_cents,
     max_active_orders: s.max_active_orders,
     driver_name: s.driver_name,

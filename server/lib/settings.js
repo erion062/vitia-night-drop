@@ -4,6 +4,12 @@ import { HttpError, hhmm, int, num, str } from './util.js';
 
 let cache = null;
 
+function persistSetting(key, value) {
+  db.prepare(
+    'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+  ).run(key, JSON.stringify(value));
+}
+
 export function getSettings() {
   if (cache) return cache;
   const rows = db.prepare('SELECT key, value FROM settings').all();
@@ -14,6 +20,16 @@ export function getSettings() {
     } catch {
       /* ignore corrupt value, default applies */
     }
+  }
+  if (stored.delivery_inner_km == null) {
+    if (stored.delivery_fee_cents == null || stored.delivery_fee_cents === 400) {
+      stored.delivery_fee_cents = DEFAULT_SETTINGS.delivery_fee_cents;
+      persistSetting('delivery_fee_cents', stored.delivery_fee_cents);
+    }
+    stored.delivery_inner_km = DEFAULT_SETTINGS.delivery_inner_km;
+    stored.delivery_per_km_cents = DEFAULT_SETTINGS.delivery_per_km_cents;
+    persistSetting('delivery_inner_km', stored.delivery_inner_km);
+    persistSetting('delivery_per_km_cents', stored.delivery_per_km_cents);
   }
   cache = { ...DEFAULT_SETTINGS, ...stored };
   return cache;
@@ -30,7 +46,9 @@ const VALIDATORS = {
   business_phone: (v) => str(v, { max: 30, field: 'Business phone', optional: true }),
   open_time: (v) => hhmm(v, 'Opening time'),
   close_time: (v) => hhmm(v, 'Closing time'),
-  delivery_fee_cents: (v) => int(v, { min: 0, max: 5000, field: 'Delivery fee' }),
+  delivery_fee_cents: (v) => int(v, { min: 0, max: 5000, field: 'Delivery fee in Viti' }),
+  delivery_inner_km: (v) => num(v, { min: 0.5, max: 20, field: 'In-town radius' }),
+  delivery_per_km_cents: (v) => int(v, { min: 0, max: 500, field: 'Extra per km' }),
   min_order_cents: (v) => int(v, { min: 0, max: 20000, field: 'Minimum order' }),
   max_active_orders: (v) => int(v, { min: 1, max: 50, field: 'Maximum active orders' }),
   max_active_per_customer: (v) => int(v, { min: 1, max: 10, field: 'Active orders per customer' }),

@@ -255,6 +255,14 @@ if (!usersSql.includes("'partner'") || !userCols.has('partner_slug')) {
   }
 }
 
+const userColsNow = new Set(db.prepare('PRAGMA table_info(users)').all().map((c) => c.name));
+for (const [name, def] of [
+  ['facebook_id', "TEXT NOT NULL DEFAULT ''"],
+  ['instagram_id', "TEXT NOT NULL DEFAULT ''"],
+]) {
+  if (!userColsNow.has(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`);
+}
+
 export function tx(fn) {
   db.exec('BEGIN IMMEDIATE');
   try {

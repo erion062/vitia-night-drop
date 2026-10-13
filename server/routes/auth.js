@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { createSession, destroySession, hashPassword, rateLimit, verifyPassword } from '../auth.js';
 import { db } from '../db.js';
+import { finishFacebook, hidePlaceholderPhone, startFacebook } from '../lib/oauth.js';
 import { toAdmins } from '../realtime.js';
 import { HttpError, normalizePhone, nowIso, str } from '../lib/util.js';
 
@@ -11,7 +12,7 @@ const limiter = rateLimit({ windowMs: 15 * 60e3, max: 20, key: (req) => `auth:${
 const publicUser = (u) => ({
   id: u.id,
   full_name: u.full_name,
-  phone: u.phone,
+  phone: hidePlaceholderPhone(u.phone),
   role: u.role,
   partner: u.partner || u.partner_slug || '',
 });
@@ -38,6 +39,15 @@ router.post('/register', limiter, (req, res) => {
   createSession(res, user.id);
   toAdmins('customers', {});
   res.status(201).json({ user: publicUser(user) });
+});
+
+router.get('/facebook', limiter, (req, res) => startFacebook(req, res, 'facebook'));
+router.get('/facebook/callback', limiter, (req, res, next) => {
+  finishFacebook(req, res, 'facebook').catch(next);
+});
+router.get('/instagram', limiter, (req, res) => startFacebook(req, res, 'instagram'));
+router.get('/instagram/callback', limiter, (req, res, next) => {
+  finishFacebook(req, res, 'instagram').catch(next);
 });
 
 router.post('/login', limiter, (req, res) => {

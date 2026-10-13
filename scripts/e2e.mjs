@@ -169,14 +169,14 @@ async function main() {
     total_cents: 1,
     items: [
       { product_id: redbull.id, quantity: 2, price_cents: 1 },
-      { product_id: marlboro.id, quantity: 2 },
+      { product_id: marlboro.id, quantity: 3 },
     ],
   });
   ok(r.status === 201, 'order placed (cash on delivery)');
   const placed = r.data.order;
-  const expectedSubtotal = redbull.price_cents * 2 + marlboro.price_cents * 2;
+  const expectedSubtotal = redbull.price_cents * 2 + marlboro.price_cents * 3;
   ok(placed.subtotal_cents === expectedSubtotal, `server computed subtotal ${placed.subtotal_cents}`);
-  ok(placed.delivery_fee_cents === 400 && placed.total_cents === expectedSubtotal + 400, 'delivery fee €4 added server-side');
+  ok(placed.delivery_fee_cents === 200 && placed.total_cents === expectedSubtotal + 200, 'delivery fee €2 in Viti added server-side');
   ok(/^VND-\d{4}$/.test(placed.number) && placed.status === 'PENDING', `order number ${placed.number}, status PENDING`);
   ok(placed.payment_method === 'cash', 'payment is cash on delivery');
 
@@ -241,8 +241,8 @@ async function main() {
   r = await admin.req('GET', '/admin/revenue?range=today');
   const t = r.data.totals;
   ok(t.revenue_cents === placed.total_cents, `revenue today ${t.revenue_cents} = order total`);
-  ok(t.delivery_fees_cents === 400 && t.product_sales_cents === expectedSubtotal, 'product sales / delivery fees split');
-  ok(t.net_profit_cents < t.revenue_cents && t.net_profit_cents === t.product_profit_cents + 400 - 100, 'net profit = margin + fee − fuel');
+  ok(t.delivery_fees_cents === 200 && t.product_sales_cents === expectedSubtotal, 'product sales / delivery fees split');
+  ok(t.net_profit_cents < t.revenue_cents && t.net_profit_cents === t.product_profit_cents + 200 - 100, 'net profit = margin + fee − fuel');
   ok(t.delivered === 1 && r.data.top_products.length === 2, 'completed deliveries + top products');
   ok(r.data.by_hour.length === 24 && r.data.by_day.length === 1, 'hourly and daily series');
   for (const range of ['week', 'month']) ok((await admin.req('GET', `/admin/revenue?range=${range}`)).data.totals.delivered === 1, `range ${range} works`);
@@ -266,16 +266,16 @@ async function main() {
   }
   for (let i = 0; i < 5; i++) {
     const { c, phone } = customers[i];
-    r = await c.req('POST', '/orders', { ...order, phone, items: [{ product_id: marlboro.id, quantity: 3 }] });
+    r = await c.req('POST', '/orders', { ...order, phone, items: [{ product_id: marlboro.id, quantity: 4 }] });
     ok(r.status === 201, `order ${i + 1}/5 accepted`);
   }
-  r = await customers[5].c.req('POST', '/orders', { ...order, phone: customers[5].phone, items: [{ product_id: marlboro.id, quantity: 3 }] });
+  r = await customers[5].c.req('POST', '/orders', { ...order, phone: customers[5].phone, items: [{ product_id: marlboro.id, quantity: 4 }] });
   ok(r.status === 409 && r.data.code === 'BUSY' && /zënë/.test(r.data.error), '6th order blocked: ' + r.data.error);
   ok((await customers[5].c.req('GET', '/config')).data.reason === 'BUSY', 'public config reports BUSY');
   // Cancelled orders free capacity.
   const first = (await admin.req('GET', '/admin/orders')).data.orders[0];
   await admin.req('POST', `/admin/orders/${first.id}/status`, { status: 'CANCELLED', note: 'test' });
-  r = await customers[5].c.req('POST', '/orders', { ...order, phone: customers[5].phone, items: [{ product_id: marlboro.id, quantity: 3 }] });
+  r = await customers[5].c.req('POST', '/orders', { ...order, phone: customers[5].phone, items: [{ product_id: marlboro.id, quantity: 4 }] });
   ok(r.status === 201, 'capacity frees up after a cancellation');
 
   console.log('Cash calculator & offers');

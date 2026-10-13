@@ -9,11 +9,33 @@ import { track } from '../lib/track';
 import { useAuth } from '../state/auth';
 import { useConfig } from '../state/config';
 
+const SHOW_SOCIAL_LOGIN = false;
+
+const SOCIAL_ERR: Record<string, string> = {
+  social_setup: 'Facebook dhe Instagram s’janë lidhur ende. Hyr me numër telefoni.',
+  social_denied: 'Anulove hyrjen. Provo sërish ose hyr me numër.',
+  social_failed: 'Hyrja me Facebook / Instagram dështoi. Provo sërish ose hyr me numër.',
+};
+
 function useNext() {
   const [params] = useSearchParams();
   const next = params.get('next') || '';
   // Only allow in-app relative redirects.
   return next.startsWith('/') && !next.startsWith('//') ? next : '';
+}
+
+function SocialButtons({ next }: { next: string }) {
+  const q = next ? `?next=${encodeURIComponent(next)}` : '';
+  return (
+    <div className="social-auth">
+      <a className="btn btn-social facebook" href={`/api/auth/facebook${q}`}>
+        <Icon name="facebook" size={18} /> Vazhdo me Facebook
+      </a>
+      <a className="btn btn-social instagram" href={`/api/auth/instagram${q}`}>
+        <Icon name="instagram" size={18} /> Vazhdo me Instagram
+      </a>
+    </div>
+  );
 }
 
 function AuthShell({ children, back }: { children: React.ReactNode; back?: boolean }) {
@@ -37,11 +59,12 @@ export function Login() {
   const { login, user } = useAuth();
   const { config } = useConfig();
   const next = useNext();
+  const [params] = useSearchParams();
   const nav = useNavigate();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(SOCIAL_ERR[params.get('err') || ''] || '');
   const [busy, setBusy] = useState(false);
 
   if (user) return <Navigate to={next || homeFor(user)} replace />;
@@ -81,6 +104,12 @@ export function Login() {
           {busy ? 'Po hyn…' : 'Hyr'} <Icon name="right" />
         </button>
       </form>
+      {SHOW_SOCIAL_LOGIN && (
+        <>
+          <div className="or">OSE</div>
+          <SocialButtons next={next} />
+        </>
+      )}
       <div className="or">OSE</div>
       <Link to={`/register${next ? `?next=${encodeURIComponent(next)}` : ''}`} className="btn btn-outline btn-block">
         <Icon name="user" size={18} /> Krijo llogari të re
@@ -147,6 +176,12 @@ export function Register() {
           {busy ? 'Po krijohet llogaria…' : 'Krijo llogarinë'} <Icon name="right" />
         </button>
       </form>
+      {SHOW_SOCIAL_LOGIN && (
+        <>
+          <div className="or">OSE</div>
+          <SocialButtons next={next} />
+        </>
+      )}
       <p className="auth-small">
         Ke llogari? <Link to={`/login${next ? `?next=${encodeURIComponent(next)}` : ''}`}>Hyr</Link>
       </p>

@@ -140,6 +140,10 @@ export const config = {
     name: env.SOFRA_NAME || 'Furra Sofra',
     resetPassword: env.SOFRA_RESET_PASSWORD === 'true',
   },
+  facebook: {
+    appId: (env.FACEBOOK_APP_ID || '').trim(),
+    appSecret: (env.FACEBOOK_APP_SECRET || '').trim(),
+  },
   // Simulation can never be switched on in production, even if the env var is set.
   simulation: !isProd && env.ENABLE_SIMULATION === 'true',
   allowedOrigins: (env.ALLOWED_ORIGINS || '')

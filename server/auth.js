@@ -77,7 +77,7 @@ export function loadUser(req, _res, next) {
       req.user = {
         id: row.id,
         full_name: row.full_name,
-        phone: row.phone,
+        phone: row.phone?.startsWith('+383000') ? '' : row.phone,
         role: row.role,
         partner: row.partner_slug || '',
       };
