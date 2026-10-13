@@ -6,8 +6,9 @@ import { config } from '../config.js';
 import { db } from '../db.js';
 import { toAdmins } from '../realtime.js';
 import { clearDriverLocation, getDriverLocation, saveDriverLocation } from '../lib/location.js';
-import { createOrder } from '../lib/orders.js';
+import { createOrder, getAdminOrder } from '../lib/orders.js';
 import { getSettings } from '../lib/settings.js';
+import { notifyNewOrder } from '../lib/whatsapp.js';
 import { HttpError, int, nowIso } from '../lib/util.js';
 
 const router = Router();
@@ -115,6 +116,7 @@ router.post('/customers', (req, res) => {
         items,
       });
       toAdmins('order:new', { id });
+      notifyNewOrder(getAdminOrder(id));
       created.push(id);
     } catch (e) {
       errors.push(e.message);

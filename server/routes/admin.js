@@ -12,6 +12,7 @@ import { createAnnouncement, listAnnouncements, removeAnnouncement } from '../li
 import { computeRevenue } from '../lib/revenue.js';
 import { addDays } from '../lib/time.js';
 import { getSettings, updateSettings } from '../lib/settings.js';
+import { sendWhatsAppTest } from '../lib/whatsapp.js';
 import { HttpError, int, nowIso, num, str } from '../lib/util.js';
 import { listVisitors, visitorDetail, visitorSummary } from '../lib/visitors.js';
 
@@ -239,6 +240,17 @@ router.put('/settings', (req, res) => {
   const settings = updateSettings(req.body);
   toAdmins('settings', {});
   res.json({ settings });
+});
+
+router.post('/whatsapp-test', async (_req, res) => {
+  try {
+    const result = await sendWhatsAppTest();
+    if (!result.ok) throw new HttpError(400, result.error);
+    res.json({ ok: true });
+  } catch (err) {
+    if (err.status) throw err;
+    throw new HttpError(502, err.message || 'WhatsApp did not accept the test message');
+  }
 });
 
 // ---------- Announcements (customer banner) ----------

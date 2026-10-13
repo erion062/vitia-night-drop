@@ -159,6 +159,7 @@ export default function SettingsPage() {
   const [form, setForm] = useState<Record<string, string | boolean>>({});
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
+  const [waBusy, setWaBusy] = useState(false);
   const [notif, setNotif] = useState(typeof Notification !== 'undefined' ? Notification.permission : 'unsupported');
 
   useEffect(() => {
@@ -180,6 +181,8 @@ export default function SettingsPage() {
       location_sharing_enabled: settings.location_sharing_enabled,
       sound_enabled: settings.sound_enabled,
       business_online: settings.business_online,
+      whatsapp_phone: settings.whatsapp_phone || '',
+      whatsapp_apikey: settings.whatsapp_apikey || '',
     });
   }, [settings]);
 
@@ -208,6 +211,8 @@ export default function SettingsPage() {
       location_sharing_enabled: !!form.location_sharing_enabled,
       sound_enabled: !!form.sound_enabled,
       business_online: !!form.business_online,
+      whatsapp_phone: v('whatsapp_phone'),
+      whatsapp_apikey: v('whatsapp_apikey'),
     };
     try {
       await saveSettings(patch);
@@ -321,6 +326,28 @@ export default function SettingsPage() {
             <span>New-order notification sound</span>
           </label>
 
+          <h2 className="panel-title mt">WhatsApp alerts</h2>
+          <p className="hint">
+            WhatsApp will not let the site message you by itself. Activate CallMeBot on your phone once, then paste the key
+            here. New customer orders will text that same WhatsApp.
+          </p>
+          <ol className="hint" style={{ paddingLeft: 18, margin: '0 0 12px' }}>
+            <li>Save +34 611 04 87 48 as a contact (any name, e.g. CallMeBot).</li>
+            <li>WhatsApp that contact: I allow callmebot to send me messages</li>
+            <li>Wait for a reply with your APIKEY (can take a minute; if not, wait and try again).</li>
+            <li>Paste your number and that key below, Save, then Test.</li>
+          </ol>
+          <div className="two-col">
+            <label className="field">
+              <span className="field-label">Your WhatsApp number</span>
+              <input className="input" type="tel" value={v('whatsapp_phone')} onChange={set('whatsapp_phone')} placeholder="044 123 456" />
+            </label>
+            <label className="field">
+              <span className="field-label">CallMeBot API key</span>
+              <input className="input" value={v('whatsapp_apikey')} onChange={set('whatsapp_apikey')} placeholder="123123" autoComplete="off" />
+            </label>
+          </div>
+
           <ErrorBox>{error}</ErrorBox>
           {msg && <p className="accent">{msg}</p>}
           <button className="btn btn-primary btn-lg">Save settings</button>
@@ -346,8 +373,28 @@ export default function SettingsPage() {
               >
                 <Icon name="bell" size={16} /> {notif === 'granted' ? 'Notifications enabled' : notif === 'unsupported' ? 'Notifications unsupported' : 'Enable browser notifications'}
               </button>
+              <button
+                className="btn btn-outline btn-sm"
+                disabled={waBusy || !v('whatsapp_phone') || !v('whatsapp_apikey')}
+                onClick={async () => {
+                  setError('');
+                  setMsg('');
+                  setWaBusy(true);
+                  try {
+                    await saveSettings({ whatsapp_phone: v('whatsapp_phone'), whatsapp_apikey: v('whatsapp_apikey') });
+                    await api('/admin/whatsapp-test', { method: 'POST' });
+                    setMsg('Test sent. Check WhatsApp.');
+                  } catch (err) {
+                    setError(errorMessage(err));
+                  } finally {
+                    setWaBusy(false);
+                  }
+                }}
+              >
+                <Icon name="message" size={16} /> {waBusy ? 'Sending…' : 'Test WhatsApp'}
+              </button>
             </div>
-            <p className="hint">Keep this dashboard open (and the sound unlocked) during opening hours so no order is missed.</p>
+            <p className="hint">Keep this dashboard open (and the sound unlocked) during opening hours so no order is missed. WhatsApp still fires if the dashboard is closed.</p>
           </section>
           <GpsPanel />
           <ResetRequests />

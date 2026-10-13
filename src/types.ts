@@ -196,4 +196,6 @@ export interface Settings {
   base_lat: number;
   base_lng: number;
   service_radius_km: number;
+  whatsapp_phone: string;
+  whatsapp_apikey: string;
 }

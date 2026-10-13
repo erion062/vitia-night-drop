@@ -1,6 +1,6 @@
 import { db } from '../db.js';
 import { DEFAULT_SETTINGS } from '../seed.js';
-import { HttpError, hhmm, int, num, str } from './util.js';
+import { HttpError, hhmm, int, normalizePhone, num, str } from './util.js';
 
 let cache = null;
 
@@ -61,6 +61,13 @@ const VALIDATORS = {
   base_lat: (v) => num(v, { min: -90, max: 90, field: 'Base latitude' }),
   base_lng: (v) => num(v, { min: -180, max: 180, field: 'Base longitude' }),
   service_radius_km: (v) => num(v, { min: 0.5, max: 50, field: 'Service radius' }),
+  whatsapp_phone: (v) => {
+    if (v === undefined || v === null || String(v).trim() === '') return '';
+    const phone = normalizePhone(String(v));
+    if (!phone) throw new HttpError(400, 'WhatsApp phone is invalid');
+    return phone;
+  },
+  whatsapp_apikey: (v) => str(v, { max: 80, field: 'WhatsApp API key', optional: true }),
 };
 
 export function updateSettings(patch) {

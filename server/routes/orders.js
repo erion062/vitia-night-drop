@@ -13,6 +13,7 @@ import {
   listCustomerOrders,
 } from '../lib/orders.js';
 import { getSettings } from '../lib/settings.js';
+import { notifyNewOrder } from '../lib/whatsapp.js';
 
 const router = Router();
 router.use((req, _res, next) => {
@@ -30,6 +31,7 @@ router.post('/', orderLimiter, (req, res) => {
   const id = createOrder(req.user, req.body);
   const order = getAdminOrder(id);
   toAdmins('order:new', { id, number: order.number });
+  notifyNewOrder(order);
   const { view } = getCustomerOrder(req.user.id, order.number);
   res.status(201).json({ order: view });
 });

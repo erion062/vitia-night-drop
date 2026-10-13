@@ -314,4 +314,6 @@ export const DEFAULT_SETTINGS = {
   base_lat: 42.3214,
   base_lng: 21.3583,
   service_radius_km: 15,
+  whatsapp_phone: '',
+  whatsapp_apikey: '',
 };
