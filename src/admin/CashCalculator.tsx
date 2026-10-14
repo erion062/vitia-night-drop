@@ -66,7 +66,7 @@ export function CashCalculator({
   }, [preset, customPct, customEur]);
 
   const original = order.subtotal_cents + order.delivery_fee_cents;
-  const off = discountCents(order, discount);
+  const off = discount ? discountCents(order, discount) : order.discount_cents || 0;
   const total = original - off;
   const cash = received === '' ? null : parseEuro(received);
   const change = cash === null ? null : cash - total;

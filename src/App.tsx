@@ -29,6 +29,7 @@ const Revenue = lazy(() => import('./admin/Revenue'));
 const Products = lazy(() => import('./admin/Products'));
 const SettingsPage = lazy(() => import('./admin/SettingsPage'));
 const Announcements = lazy(() => import('./admin/Announcements'));
+const PromoCodes = lazy(() => import('./admin/PromoCodes'));
 const Visitors = lazy(() => import('./admin/Visitors'));
 const PartnerLayout = lazy(() => import('./partner/PartnerLayout'));
 const PartnerProducts = lazy(() => import('./partner/PartnerProducts'));
@@ -78,6 +79,7 @@ export default function App() {
                   <Route path="products" element={<Products />} />
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="announcements" element={<Announcements />} />
+                  <Route path="codes" element={<PromoCodes />} />
                   <Route path="visitors" element={<Visitors />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />

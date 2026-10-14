@@ -121,6 +121,7 @@ export interface CustomerOrder {
   delivery_fee_cents: number;
   discount_cents: number;
   discount_label: string;
+  promo_code?: string;
   total_cents: number;
   eta_from: string | null;
   eta_to: string | null;

@@ -1,5 +1,6 @@
 import { db, tx } from '../db.js';
 import { quoteDeliveryFeeCents } from './delivery.js';
+import { applyPromo } from './promo.js';
 import { getSettings } from './settings.js';
 import { isWithinHours } from './time.js';
 import { HttpError, haversineKm, int, normalizePhone, nowIso, num, str } from './util.js';
@@ -111,6 +112,7 @@ export function createOrder(user, body) {
     }
 
     const fee = quoteDeliveryFeeCents(lat, lng, settings);
+    const promo = applyPromo(body?.promo_code, fee);
     const now = new Date();
     const createdAt = now.toISOString();
     const etaFrom = new Date(now.getTime() + 20 * 60e3).toISOString();
@@ -119,8 +121,9 @@ export function createOrder(user, body) {
     const res = db
       .prepare(
         `INSERT INTO orders (number, user_id, customer_name, phone, address, notes, lat, lng, status,
-          subtotal_cents, delivery_fee_cents, total_cents, cost_cents, fuel_cost_cents, eta_from, eta_to, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          subtotal_cents, delivery_fee_cents, total_cents, cost_cents, fuel_cost_cents, discount_cents, discount_label, promo_code,
+          eta_from, eta_to, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         'TMP-' + createdAt + Math.random(),
@@ -133,9 +136,12 @@ export function createOrder(user, body) {
         lng,
         subtotal,
         fee,
-        subtotal + fee,
+        subtotal + fee - promo.discount_cents,
         cost,
         settings.fuel_cost_cents,
+        promo.discount_cents,
+        promo.discount_label,
+        promo.promo_code,
         etaFrom,
         etaTo,
         createdAt,
@@ -168,8 +174,8 @@ export function createOrder(user, body) {
  */
 export function computePayment(order, payment) {
   const d = payment?.discount;
-  let discount = 0;
-  let label = '';
+  let discount = order.discount_cents || 0;
+  let label = order.discount_label || '';
   if (d && d.type === 'percent') {
     const pct = num(d.value, { min: 0, max: 100, field: 'Discount' });
     discount = Math.round((order.subtotal_cents * pct) / 100);
@@ -266,6 +272,7 @@ export function customerView(o, items, withHistory = false) {
     delivery_fee_cents: o.delivery_fee_cents,
     discount_cents: o.discount_cents || 0,
     discount_label: o.discount_label || '',
+    promo_code: o.promo_code || '',
     total_cents: o.total_cents,
     eta_from: o.eta_from,
     eta_to: o.eta_to,

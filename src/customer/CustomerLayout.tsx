@@ -1,7 +1,9 @@
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { AnnouncementBar } from '../components/AnnouncementBar';
 import { Icon } from '../components/Icon';
 import { LogoMark } from '../components/Logo';
+import { rememberPromoCode } from '../lib/promo';
 import { useCart } from '../state/cart';
 import { useConfig } from '../state/config';
 
@@ -40,32 +42,14 @@ export default function CustomerLayout() {
   const { count } = useCart();
   const { config, error, refreshConfig, refreshProducts } = useConfig();
   const { pathname } = useLocation();
+  const [params] = useSearchParams();
+  useEffect(() => {
+    const c = params.get('code');
+    if (c) rememberPromoCode(c);
+  }, [params]);
   const hideNav = pathname.endsWith('/track') || pathname === '/checkout';
   return (
     <div className={`app-shell${hideNav ? '' : ' has-nav'}`}>
-      {error && !config && (
-        <div className="notice notice-off conn-banner">
-          <Icon name="alert" size={20} />
-          <div>
-            <b>S’ka lidhje me VND</b>
-            <span>{error} Po provohet automatikisht.</span>
-          </div>
-          <button
-            className="btn btn-outline"
-            type="button"
-            onClick={() => {
-              refreshConfig();
-              refreshProducts();
-            }}
-          >
-            Provo sërish
-          </button>
-        </div>
-      )}
-      {config?.announcements && config.announcements.length > 0 && <AnnouncementBar items={config.announcements} />}
-      <main className="app-main">
-        <Outlet />
-      </main>
       {!hideNav && (
         <nav className="bottom-nav">
           <NavLink to="/" end>
@@ -93,6 +77,31 @@ export default function CustomerLayout() {
           </NavLink>
         </nav>
       )}
+      <div className="app-body">
+        {error && !config && (
+          <div className="notice notice-off conn-banner">
+            <Icon name="alert" size={20} />
+            <div>
+              <b>S’ka lidhje me VND</b>
+              <span>{error} Po provohet automatikisht.</span>
+            </div>
+            <button
+              className="btn btn-outline"
+              type="button"
+              onClick={() => {
+                refreshConfig();
+                refreshProducts();
+              }}
+            >
+              Provo sërish
+            </button>
+          </div>
+        )}
+        {config?.announcements && config.announcements.length > 0 && <AnnouncementBar items={config.announcements} />}
+        <main className="app-main">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

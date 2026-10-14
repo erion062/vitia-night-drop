@@ -18,6 +18,7 @@ const NAV = [
   { to: '/admin/revenue', label: 'Revenue', icon: 'chart' },
   { to: '/admin/products', label: 'Products', icon: 'bag' },
   { to: '/admin/announcements', label: 'Announcements', icon: 'megaphone' },
+  { to: '/admin/codes', label: 'Promo codes', icon: 'tag' },
   { to: '/admin/visitors', label: 'Visitors', icon: 'eye' },
   { to: '/admin/settings', label: 'Settings', icon: 'settings' },
 ];

@@ -24,6 +24,7 @@ function orderText(order) {
     order.address,
     items + extra,
     `Total *${euro(order.total_cents)}* cash`,
+    order.promo_code ? `Code ${order.promo_code}` : '',
     notes,
     adminUrl(),
   ]

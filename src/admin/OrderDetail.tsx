@@ -128,6 +128,12 @@ export default function OrderDetail() {
             <span>Delivery fee</span>
             <b>{euro(order.delivery_fee_cents)}</b>
           </div>
+          {order.discount_cents > 0 && (
+            <div className="kv">
+              <span>{order.discount_label || 'Discount'}</span>
+              <b>−{euro(order.discount_cents)}</b>
+            </div>
+          )}
           <div className="kv total">
             <span>Revenue (cash to collect)</span>
             <b>{euro(order.total_cents)}</b>

@@ -11,6 +11,7 @@ import { changeStatus, getAdminOrder, listActiveOrders, listHistory, orderingSta
 import { createAnnouncement, listAnnouncements, removeAnnouncement } from '../lib/announcements.js';
 import { computeRevenue } from '../lib/revenue.js';
 import { addDays } from '../lib/time.js';
+import { createPromoCode, listPromoCodes, publicPromo, setPromoActive } from '../lib/promo.js';
 import { getSettings, updateSettings } from '../lib/settings.js';
 import { sendWhatsAppTest } from '../lib/whatsapp.js';
 import { HttpError, int, nowIso, num, str } from '../lib/util.js';
@@ -267,6 +268,23 @@ router.post('/announcements', (req, res) => {
 router.delete('/announcements/:id', (req, res) => {
   removeAnnouncement(int(req.params.id, { min: 1, field: 'Announcement' }));
   res.json({ announcements: listAnnouncements() });
+});
+
+router.get('/promo-codes', (_req, res) => {
+  res.json({ codes: listPromoCodes() });
+});
+
+router.post('/promo-codes', (req, res) => {
+  const row = createPromoCode(req.body);
+  res.status(201).json({ code: publicPromo(row), codes: listPromoCodes() });
+});
+
+router.post('/promo-codes/:id/toggle', (req, res) => {
+  const id = int(req.params.id, { min: 1, field: 'Code' });
+  const current = db.prepare('SELECT active FROM promo_codes WHERE id = ?').get(id);
+  if (!current) throw new HttpError(404, 'Code not found');
+  setPromoActive(id, !current.active);
+  res.json({ codes: listPromoCodes() });
 });
 
 // ---------- Password reset requests ----------

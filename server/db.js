@@ -156,6 +156,18 @@ db.exec(`
     removed_at TEXT
   );
 
+  CREATE TABLE IF NOT EXISTS promo_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    note TEXT NOT NULL DEFAULT '',
+    percent INTEGER NOT NULL DEFAULT 10,
+    max_uses INTEGER NOT NULL DEFAULT 0,
+    uses INTEGER NOT NULL DEFAULT 0,
+    expires_at TEXT NOT NULL DEFAULT '',
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS visitor_sessions (
     id TEXT PRIMARY KEY,
     created_at TEXT NOT NULL,
@@ -210,6 +222,7 @@ for (const [name, def] of [
   ['discount_cents', 'INTEGER NOT NULL DEFAULT 0'],
   ['discount_label', "TEXT NOT NULL DEFAULT ''"],
   ['cash_received_cents', 'INTEGER'],
+  ['promo_code', "TEXT NOT NULL DEFAULT ''"],
 ]) {
   if (!orderCols.has(name)) db.exec(`ALTER TABLE orders ADD COLUMN ${name} ${def}`);
 }

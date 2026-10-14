@@ -28,6 +28,7 @@ export function reasonTitle(reason?: string | null) {
 export function sqDiscountLabel(label?: string) {
   if (!label) return 'Ofertë';
   if (label === 'Free delivery') return 'Dorëzim falas';
+  if (label.includes('% off delivery')) return label.replace('% off delivery', '% zbritje te dorëzimit');
   if (label.endsWith('% off')) return label.replace('% off', '% zbritje');
   if (/ off$/.test(label)) return label.replace(/ off$/, ' zbritje');
   return label;

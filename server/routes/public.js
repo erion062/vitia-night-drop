@@ -4,11 +4,17 @@ import { config } from '../config.js';
 import { db } from '../db.js';
 import { activeAnnouncements } from '../lib/announcements.js';
 import { orderingState, reasonMessage } from '../lib/orders.js';
+import { previewPromo } from '../lib/promo.js';
 import { getSettings } from '../lib/settings.js';
 import { ingestTrack } from '../lib/visitors.js';
 
 const router = Router();
 const trackLimiter = rateLimit({ windowMs: 60e3, max: 90, key: (req) => `track:${req.ip}` });
+const promoLimiter = rateLimit({ windowMs: 15 * 60e3, max: 40, key: (req) => `promo:${req.ip}` });
+
+router.get('/promo/check', promoLimiter, (req, res) => {
+  res.json(previewPromo(req.query.code, 'sq'));
+});
 
 router.post('/track', trackLimiter, (req, res) => {
   ingestTrack(req);

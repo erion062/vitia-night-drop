@@ -1,10 +1,11 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { ErrorBox, Field, Map, Totals } from '../components/ui';
 import { api, customerError } from '../lib/api';
 import { track } from '../lib/track';
 import { deliveryKm, quoteDeliveryFeeCents } from '../lib/delivery';
+import { rememberPromoCode, savedPromoCode } from '../lib/promo';
 import { distanceMeters } from '../lib/geo';
 import { euro, euroShort } from '../lib/format';
 import { useAuth } from '../state/auth';
@@ -37,11 +38,28 @@ export default function Checkout() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [promoInput, setPromoInput] = useState(savedPromoCode());
+  const [promo, setPromo] = useState<{ code: string; percent: number; label: string } | null>(null);
+  const [promoMsg, setPromoMsg] = useState('');
+
+  useEffect(() => {
+    const code = savedPromoCode();
+    if (!code) return;
+    api<{ code: string; percent: number; label: string }>(`/promo/check?code=${encodeURIComponent(code)}`)
+      .then((r) => {
+        setPromo(r);
+        setPromoInput(r.code);
+        setPromoMsg(`${r.percent}% zbritje te tarifa e dorëzimit`);
+      })
+      .catch(() => {});
+  }, []);
 
   if (!user) return <Navigate to="/login?next=/checkout" replace />;
   if (cart.lines.length === 0 && !busy) return <Navigate to="/basket" replace />;
 
   const fee = quoteDeliveryFeeCents(pos, config);
+  const discount = promo ? Math.round((fee * promo.percent) / 100) : 0;
+  const due = cart.subtotal_cents + fee - discount;
   const min = config?.min_order_cents ?? 1000;
   const center = pos || { lat: config?.base_lat ?? 42.3214, lng: config?.base_lng ?? 21.3583 };
   const area = config ? { center: { lat: config.base_lat, lng: config.base_lng }, radiusKm: config.service_radius_km } : null;
@@ -79,6 +97,27 @@ export default function Checkout() {
     return Object.keys(e).length === 0 && !outside;
   }
 
+  async function applyPromo() {
+    setPromoMsg('');
+    setError('');
+    const code = promoInput.trim();
+    if (!code) {
+      setPromo(null);
+      rememberPromoCode('');
+      return;
+    }
+    try {
+      const r = await api<{ code: string; percent: number; label: string }>(`/promo/check?code=${encodeURIComponent(code)}`);
+      setPromo(r);
+      rememberPromoCode(r.code);
+      setPromoInput(r.code);
+      setPromoMsg(`${r.percent}% zbritje te tarifa e dorëzimit`);
+    } catch (e) {
+      setPromo(null);
+      setPromoMsg(customerError(e));
+    }
+  }
+
   async function submit(ev: FormEvent) {
     ev.preventDefault();
     setError('');
@@ -95,10 +134,12 @@ export default function Checkout() {
           notes,
           lat: pos!.lat,
           lng: pos!.lng,
+          promo_code: promo?.code || '',
           items: cart.lines.map((l) => ({ product_id: l.product.id, quantity: l.quantity })),
         },
       });
       localStorage.setItem(LAST_ADDRESS, JSON.stringify({ address, pos }));
+      rememberPromoCode('');
       track('checkout', `Placed order ${r.order.number}`);
       cart.clear();
       refreshConfig();
@@ -166,7 +207,7 @@ export default function Checkout() {
             <Icon name="euro" size={20} />
             <div>
               <b>Pagesa në dorëzim</b>
-              <span>Ki gati {euro(cart.subtotal_cents + fee)} — e saktë na ndihmon te dera.</span>
+              <span>Ki gati {euro(due)} — e saktë na ndihmon te dera.</span>
             </div>
             <Icon name="check" size={18} />
           </div>
@@ -183,9 +224,26 @@ export default function Checkout() {
               </div>
             ))}
           </div>
+          <div className="promo-row">
+            <Field
+              label="Kodi i ofertës (opsionale)"
+              icon="tag"
+              value={promoInput}
+              onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+              placeholder="ANA10"
+              maxLength={16}
+              autoCapitalize="characters"
+            />
+            <button type="button" className="btn btn-outline" onClick={applyPromo}>
+              Apliko
+            </button>
+          </div>
+          {promoMsg && <p className={promo ? 'accent' : 'field-error'}>{promoMsg}</p>}
           <Totals
             subtotal={cart.subtotal_cents}
             fee={fee}
+            discount={discount}
+            discountLabel={promo?.label}
             feeHint={pos && config ? `${deliveryKm(pos, config).toFixed(1)} km` : 'në Viti, rritet me distancën'}
           />
         </section>
@@ -195,7 +253,7 @@ export default function Checkout() {
 
         <div className="sticky-cta">
           <button className="btn btn-primary btn-xl" type="submit" disabled={busy || !!blocked || outside || cart.subtotal_cents < min}>
-            {busy ? 'Po vendoset porosia…' : outside ? 'ENDE S’JEMI TE ZONA JOTE' : `VENDOS POROSINË · ${euro(cart.subtotal_cents + fee)}`}
+            {busy ? 'Po vendoset porosia…' : outside ? 'ENDE S’JEMI TE ZONA JOTE' : `VENDOS POROSINË · ${euro(due)}`}
           </button>
         </div>
       </form>
