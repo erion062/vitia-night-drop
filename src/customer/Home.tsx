@@ -4,6 +4,7 @@ import { Icon } from '../components/Icon';
 import { Logo } from '../components/Logo';
 import { CATEGORY_META } from '../components/ui';
 import { api } from '../lib/api';
+import { guestOrders } from '../lib/guestOrders';
 import { ACTIVE_STATUSES, belgradeHour, euro, euroShort } from '../lib/format';
 import { useStreamEvent } from '../lib/stream';
 import { useAuth } from '../state/auth';
@@ -27,10 +28,21 @@ export default function Home() {
   }, []);
 
   const loadActive = () => {
-    if (!user) return setActive(null);
-    api<{ orders: CustomerOrder[] }>('/orders')
-      .then((r) => setActive(r.orders.find((o) => ACTIVE_STATUSES.includes(o.status)) || null))
-      .catch(() => {});
+    if (user) {
+      api<{ orders: CustomerOrder[] }>('/orders')
+        .then((r) => setActive(r.orders.find((o) => ACTIVE_STATUSES.includes(o.status)) || null))
+        .catch(() => {});
+      return;
+    }
+    const refs = guestOrders();
+    if (refs.length === 0) return setActive(null);
+    Promise.all(
+      refs.map((g) =>
+        api<{ order: CustomerOrder }>(`/orders/${encodeURIComponent(g.number)}?token=${encodeURIComponent(g.token)}`)
+          .then((d) => d.order)
+          .catch(() => null),
+      ),
+    ).then((rows) => setActive(rows.find((o) => o && ACTIVE_STATUSES.includes(o.status)) || null));
   };
   useEffect(loadActive, [user]); // eslint-disable-line react-hooks/exhaustive-deps
   useStreamEvent('order:update', loadActive);

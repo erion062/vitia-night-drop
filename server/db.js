@@ -223,6 +223,7 @@ for (const [name, def] of [
   ['discount_label', "TEXT NOT NULL DEFAULT ''"],
   ['cash_received_cents', 'INTEGER'],
   ['promo_code', "TEXT NOT NULL DEFAULT ''"],
+  ['guest_token', "TEXT NOT NULL DEFAULT ''"],
 ]) {
   if (!orderCols.has(name)) db.exec(`ALTER TABLE orders ADD COLUMN ${name} ${def}`);
 }
@@ -272,6 +273,7 @@ const userColsNow = new Set(db.prepare('PRAGMA table_info(users)').all().map((c)
 for (const [name, def] of [
   ['facebook_id', "TEXT NOT NULL DEFAULT ''"],
   ['instagram_id', "TEXT NOT NULL DEFAULT ''"],
+  ['checkout_guest', 'INTEGER NOT NULL DEFAULT 0'],
 ]) {
   if (!userColsNow.has(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`);
 }

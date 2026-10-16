@@ -29,7 +29,20 @@ router.post('/register', limiter, (req, res) => {
   if (req.body?.confirm_password !== undefined && req.body.confirm_password !== pw) {
     throw new HttpError(400, 'Fjalëkalimet nuk përputhen');
   }
-  if (db.prepare('SELECT 1 FROM users WHERE phone = ?').get(phone)) {
+  const existing = db.prepare('SELECT * FROM users WHERE phone = ?').get(phone);
+  if (existing) {
+    if (existing.role === 'customer' && existing.checkout_guest) {
+      db.prepare('UPDATE users SET full_name = ?, password_hash = ?, checkout_guest = 0 WHERE id = ?').run(
+        fullName,
+        hashPassword(pw),
+        existing.id,
+      );
+      const user = db.prepare('SELECT * FROM users WHERE id = ?').get(existing.id);
+      createSession(res, user.id);
+      toAdmins('customers', {});
+      res.status(201).json({ user: publicUser(user) });
+      return;
+    }
     throw new HttpError(409, 'Ekziston tashmë një llogari me këtë numër. Hyr këtu.');
   }
   const r = db

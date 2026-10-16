@@ -5,6 +5,7 @@ import { ErrorBox, Field, Map, Totals } from '../components/ui';
 import { api, customerError } from '../lib/api';
 import { track } from '../lib/track';
 import { deliveryKm, quoteDeliveryFeeCents } from '../lib/delivery';
+import { rememberGuestOrder } from '../lib/guestOrders';
 import { rememberPromoCode, savedPromoCode } from '../lib/promo';
 import { distanceMeters } from '../lib/geo';
 import { euro, euroShort } from '../lib/format';
@@ -54,7 +55,11 @@ export default function Checkout() {
       .catch(() => {});
   }, []);
 
-  if (!user) return <Navigate to="/login?next=/checkout" replace />;
+  useEffect(() => {
+    if (user?.full_name) setName((n) => n || user.full_name);
+    if (user?.phone) setPhone((p) => p || user.phone);
+  }, [user]);
+
   if (cart.lines.length === 0 && !busy) return <Navigate to="/basket" replace />;
 
   const fee = quoteDeliveryFeeCents(pos, config);
@@ -125,7 +130,7 @@ export default function Checkout() {
     if (cart.subtotal_cents < min) return setError(`Porosia minimale është ${euroShort(min)}`);
     setBusy(true);
     try {
-      const r = await api<{ order: CustomerOrder }>('/orders', {
+      const r = await api<{ order: CustomerOrder; guest_token?: string }>('/orders', {
         method: 'POST',
         body: {
           customer_name: name,
@@ -139,6 +144,7 @@ export default function Checkout() {
         },
       });
       localStorage.setItem(LAST_ADDRESS, JSON.stringify({ address, pos }));
+      if (r.guest_token) rememberGuestOrder(r.order.number, r.guest_token);
       rememberPromoCode('');
       track('checkout', `Placed order ${r.order.number}`);
       cart.clear();
@@ -195,6 +201,7 @@ export default function Checkout() {
           <h3 className="card-title">
             <span className="step">2</span> Të dhënat e tua
           </h3>
+          <p className="hint">S’ke nevojë për llogari — mjafton emri dhe numri. Operatori të telefonon nëse duhet.</p>
           <Field label="Emri" icon="user" value={name} onChange={(e) => setName(e.target.value)} error={errors.name} autoComplete="name" maxLength={80} />
           <Field label="Numri i telefonit" icon="phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} error={errors.phone} autoComplete="tel" />
         </section>

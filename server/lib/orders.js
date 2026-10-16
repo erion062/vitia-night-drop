@@ -1,4 +1,7 @@
+import crypto from 'node:crypto';
+import { hashPassword } from '../auth.js';
 import { db, tx } from '../db.js';
+import { toAdmins } from '../realtime.js';
 import { quoteDeliveryFeeCents } from './delivery.js';
 import { applyPromo } from './promo.js';
 import { getSettings } from './settings.js';
@@ -56,12 +59,48 @@ export function reasonMessage(reason, settings = getSettings()) {
   return REASON_MESSAGES[reason] || '';
 }
 
-export function createOrder(user, body) {
+function tokenOk(stored, given) {
+  if (!stored || !given) return false;
+  const a = Buffer.from(String(stored));
+  const b = Buffer.from(String(given));
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
+function guestAccessToken(req) {
+  return String(req.query?.token || req.body?.token || '');
+}
+
+/** Logged-in customers keep their account. Everyone else is matched or created by phone, with no password. */
+function ensureOrderCustomer(actor, customerName, phone) {
+  if (actor?.role === 'customer' && actor.id) {
+    return db.prepare('SELECT * FROM users WHERE id = ?').get(actor.id);
+  }
+  const existing = db.prepare('SELECT * FROM users WHERE phone = ?').get(phone);
+  if (existing) {
+    if (existing.role !== 'customer') {
+      throw new HttpError(409, 'Ky numër është i rezervuar. Hyr me fjalëkalim.', 'STAFF_PHONE');
+    }
+    return existing;
+  }
+  const r = db
+    .prepare(
+      `INSERT INTO users (full_name, phone, password_hash, role, partner_slug, created_at, checkout_guest)
+       VALUES (?, ?, ?, 'customer', '', ?, 1)`,
+    )
+    .run(customerName, phone, hashPassword(crypto.randomBytes(32).toString('hex')), nowIso());
+  toAdmins('customers', {});
+  return db.prepare('SELECT * FROM users WHERE id = ?').get(Number(r.lastInsertRowid));
+}
+
+export function createOrder(actor, body) {
   const settings = getSettings();
   const customerName = str(body?.customer_name, { min: 2, max: 80, field: 'Emri', lang: 'sq' });
   const phone = normalizePhone(body?.phone);
   if (!phone) throw new HttpError(400, 'Shkruaj një numër telefoni të vlefshëm');
   const address = str(body?.address, { min: 5, max: 200, field: 'Adresa e dorëzimit', lang: 'sq' });
+  const guest = !actor || actor.role !== 'customer';
+  const guestToken = guest ? crypto.randomBytes(24).toString('base64url') : '';
   const notes = str(body?.notes, { max: 300, field: 'Shënimet', optional: true, lang: 'sq' });
   const lat = num(body?.lat, { min: -90, max: 90, field: 'Vendndodhja e dorëzimit', lang: 'sq' });
   const lng = num(body?.lng, { min: -180, max: 180, field: 'Vendndodhja e dorëzimit', lang: 'sq' });
@@ -79,6 +118,7 @@ export function createOrder(user, body) {
   }
 
   return tx(() => {
+    const user = ensureOrderCustomer(actor, customerName, phone);
     const state = orderingState(settings);
     if (!state.accepting) throw new HttpError(409, reasonMessage(state.reason, settings), state.reason);
 
@@ -122,8 +162,8 @@ export function createOrder(user, body) {
       .prepare(
         `INSERT INTO orders (number, user_id, customer_name, phone, address, notes, lat, lng, status,
           subtotal_cents, delivery_fee_cents, total_cents, cost_cents, fuel_cost_cents, discount_cents, discount_label, promo_code,
-          eta_from, eta_to, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          guest_token, eta_from, eta_to, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         'TMP-' + createdAt + Math.random(),
@@ -142,6 +182,7 @@ export function createOrder(user, body) {
         promo.discount_cents,
         promo.discount_label,
         promo.promo_code,
+        guestToken,
         etaFrom,
         etaTo,
         createdAt,
@@ -164,7 +205,7 @@ export function createOrder(user, body) {
       "INSERT INTO order_status_history (order_id, status, changed_by, created_at) VALUES (?, 'PENDING', ?, ?)",
     ).run(orderId, user.id, createdAt);
 
-    return orderId;
+    return { id: orderId, guest_token: guestToken };
   });
 }
 
@@ -315,6 +356,18 @@ export function getCustomerOrder(userId, number) {
   const o = db.prepare('SELECT * FROM orders WHERE number = ? AND user_id = ?').get(number, userId);
   if (!o) throw new HttpError(404, 'S’e gjetëm këtë porosi');
   return { row: o, view: customerView(o, itemsFor([o.id]).get(o.id), true) };
+}
+
+export function getCustomerOrderByAccess(req, number) {
+  const o = db.prepare('SELECT * FROM orders WHERE number = ?').get(number);
+  if (!o) throw new HttpError(404, 'S’e gjetëm këtë porosi');
+  if (req.user && o.user_id === req.user.id) {
+    return { row: o, view: customerView(o, itemsFor([o.id]).get(o.id), true) };
+  }
+  if (tokenOk(o.guest_token, guestAccessToken(req))) {
+    return { row: o, view: customerView(o, itemsFor([o.id]).get(o.id), true) };
+  }
+  throw new HttpError(404, 'S’e gjetëm këtë porosi');
 }
 
 export function getAdminOrder(id) {

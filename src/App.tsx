@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Spinner } from './components/ui';
 import Account from './customer/Account';
 import { Forgot, Login, Register } from './customer/AuthPages';
@@ -9,7 +9,7 @@ import Home from './customer/Home';
 import PartnerPage from './customer/PartnerPage';
 import Shop from './customer/Shop';
 import { VisitorTracker } from './lib/track';
-import { AuthProvider, useAuth } from './state/auth';
+import { AuthProvider } from './state/auth';
 import { CartProvider } from './state/cart';
 import { ConfigProvider } from './state/config';
 
@@ -34,14 +34,6 @@ const Visitors = lazy(() => import('./admin/Visitors'));
 const PartnerLayout = lazy(() => import('./partner/PartnerLayout'));
 const PartnerProducts = lazy(() => import('./partner/PartnerProducts'));
 
-function RequireUser({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  const loc = useLocation();
-  if (loading) return <Spinner />;
-  if (!user) return <Navigate to={`/login?next=${encodeURIComponent(loc.pathname + loc.search)}`} replace />;
-  return <>{children}</>;
-}
-
 export default function App() {
   return (
     <BrowserRouter>
@@ -60,10 +52,10 @@ export default function App() {
                   <Route path="p/:slug" element={<PartnerPage />} />
                   <Route path="basket" element={<Basket />} />
                   <Route path="account" element={<Account />} />
-                  <Route path="checkout" element={<RequireUser><Checkout /></RequireUser>} />
-                  <Route path="orders" element={<RequireUser><MyOrders /></RequireUser>} />
-                  <Route path="orders/:number" element={<RequireUser><OrderPage /></RequireUser>} />
-                  <Route path="orders/:number/track" element={<RequireUser><TrackPage /></RequireUser>} />
+                  <Route path="checkout" element={<Checkout />} />
+                  <Route path="orders" element={<MyOrders />} />
+                  <Route path="orders/:number" element={<OrderPage />} />
+                  <Route path="orders/:number/track" element={<TrackPage />} />
                 </Route>
                 <Route path="/partner" element={<PartnerLayout />}>
                   <Route index element={<PartnerProducts />} />

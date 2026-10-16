@@ -75,7 +75,7 @@ export default function Account() {
         </section>
       ) : (
         <section className="card">
-          <p>Hyr që të porositësh dhe t’i ndjekësh dorëzimet — operatori ta sjell tani, te dera.</p>
+          <p>Mund të porositësh pa llogari. Hyr vetëm nëse do t’i shohësh porositë e vjetra në çdo telefon.</p>
           <div className="btn-row">
             <Link to="/login" className="btn btn-primary">
               Hyr

@@ -106,7 +106,7 @@ router.post('/customers', (req, res) => {
       subtotal += p.price_cents;
     }
     try {
-      const id = createOrder(user, {
+      const { id } = createOrder(user, {
         customer_name: name,
         phone,
         address: `${STREETS[Math.floor(Math.random() * STREETS.length)]} ${1 + Math.floor(Math.random() * 60)}, Viti`,

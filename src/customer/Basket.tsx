@@ -2,7 +2,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { Empty, ProductImage, QtyControl, Totals } from '../components/ui';
 import { euro, euroShort } from '../lib/format';
-import { useAuth } from '../state/auth';
 import { useCart } from '../state/cart';
 import { useConfig } from '../state/config';
 import { TopBar } from './CustomerLayout';
@@ -11,7 +10,6 @@ import { reasonTitle } from './copy';
 export default function Basket() {
   const cart = useCart();
   const { config } = useConfig();
-  const { user } = useAuth();
   const nav = useNavigate();
   const min = config?.min_order_cents ?? 1000;
   const fee = config?.delivery_fee_cents ?? 200;
@@ -87,7 +85,7 @@ export default function Basket() {
       )}
 
       <div className="sticky-cta">
-        <button className="btn btn-primary btn-xl" disabled={missing > 0 || !!blocked} onClick={() => nav(user ? '/checkout' : '/login?next=/checkout')}>
+        <button className="btn btn-primary btn-xl" disabled={missing > 0 || !!blocked} onClick={() => nav('/checkout')}>
           {missing > 0 ? `Porosia minimale është ${euroShort(min)}` : blocked ? 'Tani s’mund të porositësh' : `VAZHDO · ${euro(cart.subtotal_cents + fee)}`}
           {missing === 0 && !blocked && <Icon name="right" />}
         </button>

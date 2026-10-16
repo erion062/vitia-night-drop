@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { ErrorBox, Spinner, StatusBadge, Timeline, Totals } from '../components/ui';
 import { api, customerError } from '../lib/api';
+import { guestToken } from '../lib/guestOrders';
 import { euro, time } from '../lib/format';
 import { TopBar } from './CustomerLayout';
 import { sqCancelReason } from './copy';
@@ -37,7 +38,7 @@ export default function OrderPage() {
     if (!confirm('Anulon këtë porosi?')) return;
     setCancelling(true);
     try {
-      await api(`/orders/${o.number}/cancel`, { method: 'POST' });
+      await api(`/orders/${o.number}/cancel`, { method: 'POST', body: { token: guestToken(o.number) } });
       reload();
     } catch (e) {
       setCancelErr(customerError(e));

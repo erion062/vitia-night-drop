@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, customerError } from '../lib/api';
+import { guestQuery } from '../lib/guestOrders';
 import { usePolling, useStreamEvent } from '../lib/stream';
 import type { CustomerOrder, DriverLocation } from '../types';
 
@@ -16,7 +17,7 @@ export function useCustomerOrder(number: string) {
   const [error, setError] = useState('');
 
   const load = useCallback(() => {
-    api<TrackingData>(`/orders/${encodeURIComponent(number)}`)
+    api<TrackingData>(`/orders/${encodeURIComponent(number)}${guestQuery(number)}`)
       .then((d) => {
         setData(d);
         setError('');

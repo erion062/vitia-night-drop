@@ -188,6 +188,30 @@ async function main() {
   ok(!!adminOrder && adminOrder.cost_cents > 0, 'order on admin active list with purchase cost');
   ok(r.data.state.active === 1, 'active count 1 / 5');
 
+  console.log('Guest checkout (no login)');
+  const guest = new Client('guest');
+  const guestPhone = '044' + rand();
+  const guestBody = {
+    customer_name: 'Guest Test',
+    phone: guestPhone,
+    address: 'Rr. Skënderbeu 12, Viti',
+    notes: '',
+    ...VITI,
+    items: [
+      { product_id: redbull.id, quantity: 2 },
+      { product_id: marlboro.id, quantity: 3 },
+    ],
+  };
+  r = await guest.req('POST', '/orders', guestBody);
+  ok(r.status === 201 && r.data.guest_token && r.data.order.status === 'PENDING', 'guest can place an order without an account');
+  const guestPlaced = r.data.order;
+  ok((await guest.req('GET', `/orders/${guestPlaced.number}`)).status === 401, 'guest cannot read order without token');
+  ok((await guest.req('GET', `/orders/${guestPlaced.number}?token=wrongtokenwrongtokenwrongtok`)).status === 404, 'wrong guest token rejected');
+  const guestToken = r.data.guest_token;
+  ok((await guest.req('GET', `/orders/${guestPlaced.number}?token=${guestToken}`)).status === 200, 'guest can track with token');
+  ok((await alice.req('GET', `/orders/${guestPlaced.number}`)).status === 404, 'logged-in customer cannot read someone else guest order');
+  ok((await guest.req('POST', `/orders/${guestPlaced.number}/cancel`, { token: guestToken })).status === 200, 'guest can cancel with token');
+
   console.log('Privacy');
   const bobPhone = '045' + rand();
   await bob.req('POST', '/auth/register', { full_name: 'Bob', phone: bobPhone, password: 'secret12' });
