@@ -140,6 +140,12 @@ export const config = {
     name: env.SOFRA_NAME || 'Furra Sofra',
     resetPassword: env.SOFRA_RESET_PASSWORD === 'true',
   },
+  ballerina: {
+    phone: env.BALLERINA_PHONE || '',
+    password: env.BALLERINA_PASSWORD || '',
+    name: env.BALLERINA_NAME || 'Ballerina',
+    resetPassword: env.BALLERINA_RESET_PASSWORD === 'true',
+  },
   facebook: {
     appId: (env.FACEBOOK_APP_ID || '').trim(),
     appSecret: (env.FACEBOOK_APP_SECRET || '').trim(),
@@ -179,4 +185,9 @@ if (!isProd && !config.andi.phone) {
   config.andi.phone = '045453998';
   config.andi.password = 'andi-dev-market';
   console.warn('[vnd] Using development Andi Market login 045453998 / andi-dev-market');
+}
+if (!isProd && !config.ballerina.phone) {
+  config.ballerina.phone = '048722228';
+  config.ballerina.password = 'Ballerina048';
+  console.warn('[vnd] Using development Ballerina login 048722228 / Ballerina048');
 }

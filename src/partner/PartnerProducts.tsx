@@ -8,17 +8,18 @@ import type { Category, Partner, Product } from '../types';
 
 function emptyProduct(shop: Partner | null): Product {
   const bakery = shop?.kind === 'bakery';
+  const pastry = shop?.kind === 'pastry';
   return {
     id: 0,
     name: '',
     description: '',
-    category: bakery ? 'food' : 'other',
+    category: bakery || pastry ? 'food' : 'other',
     price_cents: 0,
     image_url: '',
-    accent: bakery ? '#C4A35A' : '#00FF66',
+    accent: bakery ? '#C4A35A' : pastry ? '#C9A86C' : '#00FF66',
     available: true,
     popular: false,
-    section: bakery ? 'Bukë' : shop?.kind === 'restaurant' ? 'Menu' : 'Market',
+    section: bakery ? 'Bukë' : pastry ? 'Torta' : shop?.kind === 'restaurant' ? 'Menu' : 'Market',
   };
 }
 

@@ -291,6 +291,54 @@ export function ensureFurraSofra() {
   }
 }
 
+export function ensureBallerina() {
+  const { ballerina } = config;
+  const phone = ballerina.phone ? normalizeAdminPhone(ballerina.phone) : '';
+  const now = nowIso();
+  const logoSrc = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'marketing', 'partners', 'ballerina-logo.jpg');
+  const logo = '/uploads/ballerina-logo.jpg';
+  try {
+    fs.mkdirSync(config.uploadsDir, { recursive: true });
+    if (fs.existsSync(logoSrc)) fs.copyFileSync(logoSrc, path.join(config.uploadsDir, 'ballerina-logo.jpg'));
+  } catch {}
+  db.prepare(
+    `INSERT INTO partners (slug, name, tagline, logo_url, phone, hours, active, sort, created_at, kind)
+     VALUES ('ballerina', 'Ballerina', 'Pastiçeri · ushqim · ëmbëlsira', ?, ?, '', 1, 4, ?, 'pastry')
+     ON CONFLICT(slug) DO UPDATE SET name=excluded.name, tagline=excluded.tagline, logo_url=excluded.logo_url,
+       phone=excluded.phone, kind='pastry', active=1`,
+  ).run(logo, phone, now);
+
+  if (!phone || ballerina.password.length < 6) {
+    if (config.isProd) console.warn('[vnd] BALLERINA_PHONE / BALLERINA_PASSWORD not set — Ballerina login was not created.');
+    return;
+  }
+  const existing = db.prepare("SELECT id FROM users WHERE role = 'partner' AND partner_slug = 'ballerina'").get();
+  if (!existing) {
+    const byPhone = db.prepare('SELECT id, role FROM users WHERE phone = ?').get(phone);
+    if (byPhone) {
+      db.prepare("UPDATE users SET role = 'partner', partner_slug = 'ballerina', full_name = ?, password_hash = ? WHERE id = ?").run(
+        ballerina.name,
+        hashPassword(ballerina.password),
+        byPhone.id,
+      );
+    } else {
+      db.prepare(
+        "INSERT INTO users (full_name, phone, password_hash, role, partner_slug, created_at) VALUES (?, ?, ?, 'partner', 'ballerina', ?)",
+      ).run(ballerina.name, phone, hashPassword(ballerina.password), now);
+    }
+    console.log(`[vnd] Ballerina login created for ${phone}`);
+  } else if (ballerina.resetPassword) {
+    db.prepare('UPDATE users SET password_hash = ?, phone = ?, full_name = ? WHERE id = ?').run(
+      hashPassword(ballerina.password),
+      phone,
+      ballerina.name,
+      existing.id,
+    );
+    db.prepare('DELETE FROM sessions WHERE user_id = ?').run(existing.id);
+    console.log('[vnd] Ballerina password reset from BALLERINA_PASSWORD. Remove BALLERINA_RESET_PASSWORD now.');
+  }
+}
+
 function normalizeAdminPhone(p) {
   let s = p.replace(/[\s\-().]/g, '');
   if (s.startsWith('00')) s = '+' + s.slice(2);

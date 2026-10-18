@@ -17,6 +17,7 @@ export const KIND_SQ: Record<string, string> = {
   bakery: 'Furra',
   market: 'Market',
   restaurant: 'Restorant',
+  pastry: 'Pastiçeri',
 };
 
 export function partnerCover(partner: Partner, products: Product[]) {
