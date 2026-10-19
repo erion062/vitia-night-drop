@@ -41,6 +41,9 @@ router.get('/config', (_req, res) => {
     base_lat: s.base_lat,
     base_lng: s.base_lng,
     service_radius_km: s.service_radius_km,
+    no_go_lat: s.no_go_lat,
+    no_go_lng: s.no_go_lng,
+    no_go_radius_km: s.no_go_radius_km || 0,
     online: s.business_online,
     open_now: state.openNow,
     accepting_orders: state.accepting,
@@ -50,6 +53,9 @@ router.get('/config', (_req, res) => {
     simulation: config.simulation,
     osrm_url: config.osrmUrl,
     announcements: activeAnnouncements().map(({ id, message, tone, expires_at }) => ({ id, message, tone, expires_at })),
+    paypal: config.paypal.clientId && config.paypal.secret
+      ? { enabled: true, client_id: config.paypal.clientId, env: config.paypal.env }
+      : { enabled: false },
     map_tiles: config.cartoKey
       ? {
           url: `https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(config.cartoKey)}`,

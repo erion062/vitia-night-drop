@@ -61,6 +61,9 @@ const VALIDATORS = {
   base_lat: (v) => num(v, { min: -90, max: 90, field: 'Base latitude' }),
   base_lng: (v) => num(v, { min: -180, max: 180, field: 'Base longitude' }),
   service_radius_km: (v) => num(v, { min: 0.5, max: 50, field: 'Service radius' }),
+  no_go_lat: (v) => num(v, { min: -90, max: 90, field: 'No-go latitude' }),
+  no_go_lng: (v) => num(v, { min: -180, max: 180, field: 'No-go longitude' }),
+  no_go_radius_km: (v) => num(v, { min: 0, max: 50, field: 'No-go radius' }),
   whatsapp_phone: (v) => {
     if (v === undefined || v === null || String(v).trim() === '') return '';
     const phone = normalizePhone(String(v));

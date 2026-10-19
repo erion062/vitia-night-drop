@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { ErrorBox, Field, Map, Totals } from '../components/ui';
@@ -14,6 +14,7 @@ import { useCart } from '../state/cart';
 import { useConfig } from '../state/config';
 import type { CustomerOrder, LatLng } from '../types';
 import { TopBar } from './CustomerLayout';
+import { PaypalButtons } from './PaypalButtons';
 
 const LAST_ADDRESS = 'vnd_last_address';
 
@@ -42,6 +43,7 @@ export default function Checkout() {
   const [promoInput, setPromoInput] = useState(savedPromoCode());
   const [promo, setPromo] = useState<{ code: string; percent: number; label: string } | null>(null);
   const [promoMsg, setPromoMsg] = useState('');
+  const [pay, setPay] = useState<'paypal' | 'cash'>('cash');
 
   useEffect(() => {
     const code = savedPromoCode();
@@ -60,7 +62,10 @@ export default function Checkout() {
     if (user?.phone) setPhone((p) => p || user.phone);
   }, [user]);
 
-  if (cart.lines.length === 0 && !busy) return <Navigate to="/basket" replace />;
+  const paypalOn = !!config?.paypal?.enabled && !!config.paypal.client_id;
+  useEffect(() => {
+    if (paypalOn) setPay('paypal');
+  }, [paypalOn]);
 
   const fee = quoteDeliveryFeeCents(pos, config);
   const discount = promo ? Math.round((fee * promo.percent) / 100) : 0;
@@ -68,7 +73,12 @@ export default function Checkout() {
   const min = config?.min_order_cents ?? 1000;
   const center = pos || { lat: config?.base_lat ?? 42.3214, lng: config?.base_lng ?? 21.3583 };
   const area = config ? { center: { lat: config.base_lat, lng: config.base_lng }, radiusKm: config.service_radius_km } : null;
+  const noGo =
+    config && (config.no_go_radius_km || 0) > 0 && config.no_go_lat != null && config.no_go_lng != null
+      ? { center: { lat: config.no_go_lat, lng: config.no_go_lng }, radiusKm: config.no_go_radius_km as number }
+      : null;
   const outside = !!(pos && area && distanceMeters(pos, area.center) > area.radiusKm * 1000);
+  const insideNoGo = !!(pos && noGo && distanceMeters(pos, noGo.center) <= noGo.radiusKm * 1000);
 
   function locate() {
     if (!navigator.geolocation) return setError('Shfletuesi s’mund ta ndajë lokacionin. Prek hartën dhe vendos pin-in te dera.');
@@ -92,16 +102,6 @@ export default function Checkout() {
     );
   }
 
-  function validate() {
-    const e: Record<string, string> = {};
-    if (name.trim().length < 2) e.name = 'Shkruaj emrin';
-    if (phone.replace(/\D/g, '').length < 8) e.phone = 'Shkruaj një numër telefoni të vlefshëm';
-    if (address.trim().length < 5) e.address = 'Shkruaj rrugën dhe numrin e shtëpisë';
-    if (!pos) e.pos = 'Vendos pin-in te dera në hartë';
-    setErrors(e);
-    return Object.keys(e).length === 0 && !outside;
-  }
-
   async function applyPromo() {
     setPromoMsg('');
     setError('');
@@ -123,33 +123,52 @@ export default function Checkout() {
     }
   }
 
+  const checkoutBody = useCallback(() => {
+    const e: Record<string, string> = {};
+    if (name.trim().length < 2) e.name = 'Shkruaj emrin';
+    if (phone.replace(/\D/g, '').length < 8) e.phone = 'Shkruaj një numër telefoni të vlefshëm';
+    if (address.trim().length < 5) e.address = 'Shkruaj rrugën dhe numrin e shtëpisë';
+    if (!pos) e.pos = 'Vendos pin-in te dera në hartë';
+    setErrors(e);
+    if (Object.keys(e).length || outside || insideNoGo) return null;
+    if (cart.subtotal_cents < min) {
+      setError(`Porosia minimale është ${euroShort(min)}`);
+      return null;
+    }
+    return {
+      customer_name: name,
+      phone,
+      address,
+      notes,
+      lat: pos.lat,
+      lng: pos.lng,
+      promo_code: promo?.code || '',
+      items: cart.lines.map((l) => ({ product_id: l.product.id, quantity: l.quantity })),
+    };
+  }, [name, phone, address, notes, pos, promo, cart.lines, min, outside, insideNoGo]);
+
+  function finishOrder(r: { order: CustomerOrder; guest_token?: string }) {
+    localStorage.setItem(LAST_ADDRESS, JSON.stringify({ address, pos }));
+    if (r.guest_token) rememberGuestOrder(r.order.number, r.guest_token);
+    rememberPromoCode('');
+    track('checkout', `Placed order ${r.order.number}`);
+    cart.clear();
+    refreshConfig();
+    nav(`/orders/${r.order.number}?placed=1`, { replace: true });
+  }
+
   async function submit(ev: FormEvent) {
     ev.preventDefault();
     setError('');
-    if (!validate()) return;
-    if (cart.subtotal_cents < min) return setError(`Porosia minimale është ${euroShort(min)}`);
+    const body = checkoutBody();
+    if (!body) return;
     setBusy(true);
     try {
       const r = await api<{ order: CustomerOrder; guest_token?: string }>('/orders', {
         method: 'POST',
-        body: {
-          customer_name: name,
-          phone,
-          address,
-          notes,
-          lat: pos!.lat,
-          lng: pos!.lng,
-          promo_code: promo?.code || '',
-          items: cart.lines.map((l) => ({ product_id: l.product.id, quantity: l.quantity })),
-        },
+        body,
       });
-      localStorage.setItem(LAST_ADDRESS, JSON.stringify({ address, pos }));
-      if (r.guest_token) rememberGuestOrder(r.order.number, r.guest_token);
-      rememberPromoCode('');
-      track('checkout', `Placed order ${r.order.number}`);
-      cart.clear();
-      refreshConfig();
-      nav(`/orders/${r.order.number}?placed=1`, { replace: true });
+      finishOrder(r);
     } catch (e) {
       setBusy(false);
       setError(customerError(e));
@@ -159,6 +178,7 @@ export default function Checkout() {
   }
 
   const blocked = config && !config.accepting_orders;
+  if (cart.lines.length === 0 && !busy) return <Navigate to="/basket" replace />;
 
   return (
     <div className="page checkout">
@@ -177,6 +197,7 @@ export default function Checkout() {
             zoom={pos ? 17 : 14}
             picker={{ value: pos, onChange: (p) => { setPos(p); setErrors((e) => ({ ...e, pos: '' })); } }}
             serviceArea={area}
+            exclusionArea={noGo ? { ...noGo, label: 'Jo këtu' } : null}
             className="map-picker"
             loadingLabel="Harta po ngarkohet…"
           />
@@ -187,6 +208,15 @@ export default function Checkout() {
               <div>
                 <b>Ende s’jemi te zona jote</b>
                 <span>VND tani dorëzon brenda {Number(area.radiusKm.toFixed(1))} km nga Viti. Lëviz pin-in brenda rrethit të gjelbër.</span>
+              </div>
+            </div>
+          )}
+          {insideNoGo && (
+            <div className="notice notice-out" role="alert">
+              <Icon name="x" size={20} />
+              <div>
+                <b>Kjo zonë s’pranon porosi</b>
+                <span>Lëviz pin-in jashtë rrethit të kuq.</span>
               </div>
             </div>
           )}
@@ -210,14 +240,44 @@ export default function Checkout() {
           <h3 className="card-title">
             <span className="step">3</span> Pagesa
           </h3>
-          <div className="pay-option on">
+          {paypalOn && (
+            <button type="button" className={`pay-option${pay === 'paypal' ? ' on' : ''}`} onClick={() => setPay('paypal')}>
+              <Icon name="euro" size={20} />
+              <div>
+                <b>Apple Pay ose kartë</b>
+                <span>Paguaj tani — paratë shkojnë te PayPal. {euro(due)}</span>
+              </div>
+              {pay === 'paypal' && <Icon name="check" size={18} />}
+            </button>
+          )}
+          <button
+            type="button"
+            className={`pay-option${pay === 'cash' || !paypalOn ? ' on' : ''}`}
+            onClick={() => setPay('cash')}
+          >
             <Icon name="euro" size={20} />
             <div>
               <b>Pagesa në dorëzim</b>
               <span>Ki gati {euro(due)} — e saktë na ndihmon te dera.</span>
             </div>
-            <Icon name="check" size={18} />
-          </div>
+            {(pay === 'cash' || !paypalOn) && <Icon name="check" size={18} />}
+          </button>
+          {paypalOn && pay === 'paypal' && (
+            <PaypalButtons
+              clientId={config.paypal!.client_id!}
+              env={config.paypal?.env || 'live'}
+              disabled={busy || !!blocked || outside || insideNoGo || cart.subtotal_cents < min}
+              checkoutBody={checkoutBody}
+              onPaid={(r) => {
+                setBusy(true);
+                finishOrder(r);
+              }}
+              onError={(msg) => {
+                setBusy(false);
+                setError(msg);
+              }}
+            />
+          )}
         </section>
 
         <section className="card">
@@ -258,11 +318,13 @@ export default function Checkout() {
         <ErrorBox>{error}</ErrorBox>
         {blocked && <ErrorBox>{config.reason === 'BUSY' ? 'VND ËSHTË I ZËNË TANI. ' : ''}{config.reason_message}</ErrorBox>}
 
-        <div className="sticky-cta">
-          <button className="btn btn-primary btn-xl" type="submit" disabled={busy || !!blocked || outside || cart.subtotal_cents < min}>
-            {busy ? 'Po vendoset porosia…' : outside ? 'ENDE S’JEMI TE ZONA JOTE' : `VENDOS POROSINË · ${euro(due)}`}
-          </button>
-        </div>
+        {pay === 'cash' && (
+          <div className="sticky-cta">
+            <button className="btn btn-primary btn-xl" type="submit" disabled={busy || !!blocked || outside || insideNoGo || cart.subtotal_cents < min}>
+              {busy ? 'Po vendoset porosia…' : outside ? 'ENDE S’JEMI TE ZONA JOTE' : insideNoGo ? 'KJO ZONË S’PRANON POROSI' : `VENDOS POROSINË · ${euro(due)}`}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );

@@ -93,19 +93,27 @@ function ensureOrderCustomer(actor, customerName, phone) {
   return db.prepare('SELECT * FROM users WHERE id = ?').get(Number(r.lastInsertRowid));
 }
 
-export function createOrder(actor, body) {
+/** Prices always come from the database, never from the browser. */
+export function quoteCheckout(body) {
   const settings = getSettings();
   const customerName = str(body?.customer_name, { min: 2, max: 80, field: 'Emri', lang: 'sq' });
   const phone = normalizePhone(body?.phone);
   if (!phone) throw new HttpError(400, 'Shkruaj një numër telefoni të vlefshëm');
   const address = str(body?.address, { min: 5, max: 200, field: 'Adresa e dorëzimit', lang: 'sq' });
-  const guest = !actor || actor.role !== 'customer';
-  const guestToken = guest ? crypto.randomBytes(24).toString('base64url') : '';
   const notes = str(body?.notes, { max: 300, field: 'Shënimet', optional: true, lang: 'sq' });
   const lat = num(body?.lat, { min: -90, max: 90, field: 'Vendndodhja e dorëzimit', lang: 'sq' });
   const lng = num(body?.lng, { min: -180, max: 180, field: 'Vendndodhja e dorëzimit', lang: 'sq' });
   if (haversineKm(lat, lng, settings.base_lat, settings.base_lng) > settings.service_radius_km) {
     throw new HttpError(400, `Ende s’jemi te zona jote. VND tani dorëzon brenda ${settings.service_radius_km} km nga Viti.`, 'OUT_OF_AREA');
+  }
+  const noGoR = Number(settings.no_go_radius_km) || 0;
+  if (
+    noGoR > 0 &&
+    settings.no_go_lat != null &&
+    settings.no_go_lng != null &&
+    haversineKm(lat, lng, settings.no_go_lat, settings.no_go_lng) <= noGoR
+  ) {
+    throw new HttpError(400, 'Kjo zonë s’pranon porosi tani. Lëviz pin-in jashtë rrethit të kuq.', 'NO_GO');
   }
 
   if (!Array.isArray(body?.items) || body.items.length === 0) throw new HttpError(400, 'Shporta është bosh');
@@ -117,42 +125,80 @@ export function createOrder(actor, body) {
     qtyById.set(id, Math.min(20, (qtyById.get(id) || 0) + q));
   }
 
+  const ids = [...qtyById.keys()];
+  const products = db
+    .prepare(`SELECT * FROM products WHERE id IN (${ids.map(() => '?').join(',')})`)
+    .all(...ids);
+  if (products.length !== ids.length) throw new HttpError(400, 'Disa produkte s’janë më. Rifresko listen.');
+
+  let subtotal = 0;
+  let cost = 0;
+  const partnerName = new Map(db.prepare('SELECT slug, name FROM partners').all().map((r) => [r.slug, r.name]));
+  const lines = products.map((p) => {
+    if (!p.available) throw new HttpError(409, `${p.name} s’është i disponueshëm tani`, 'UNAVAILABLE');
+    if (p.price_cents <= 0) throw new HttpError(409, `${p.name} s’ka çmim ende. Andi e vendos te paneli.`, 'UNAVAILABLE');
+    const q = qtyById.get(p.id);
+    subtotal += p.price_cents * q;
+    cost += p.cost_cents * q;
+    const name = p.partner && partnerName.has(p.partner) ? `${partnerName.get(p.partner)} · ${p.name}` : p.name;
+    return {
+      product_id: p.id,
+      name,
+      category: p.category,
+      unit_price_cents: p.price_cents,
+      unit_cost_cents: p.cost_cents,
+      quantity: q,
+    };
+  });
+
+  if (subtotal < settings.min_order_cents) {
+    throw new HttpError(400, `Porosia minimale është €${(settings.min_order_cents / 100).toFixed(0)}`, 'MIN_ORDER');
+  }
+
+  const fee = quoteDeliveryFeeCents(lat, lng, settings);
+  const promo = applyPromo(body?.promo_code, fee);
+  return {
+    settings,
+    customerName,
+    phone,
+    address,
+    notes,
+    lat,
+    lng,
+    items: lines.map((l) => ({ product_id: l.product_id, quantity: l.quantity })),
+    lines,
+    subtotal,
+    fee,
+    cost,
+    promo,
+    total_cents: subtotal + fee - promo.discount_cents,
+  };
+}
+
+export function createOrder(actor, body, extras = {}) {
+  const quote = extras.quote || quoteCheckout(body);
+  const guest = !actor || actor.role !== 'customer';
+  const guestToken = guest ? crypto.randomBytes(24).toString('base64url') : '';
+  const paymentMethod = extras.payment_method === 'paypal' ? 'paypal' : 'cash';
+  const paid = extras.paid ? 1 : 0;
+  const paypalOrderId = extras.paypal_order_id ? String(extras.paypal_order_id) : '';
+
   return tx(() => {
-    const user = ensureOrderCustomer(actor, customerName, phone);
-    const state = orderingState(settings);
-    if (!state.accepting) throw new HttpError(409, reasonMessage(state.reason, settings), state.reason);
+    if (paypalOrderId) {
+      const dup = db.prepare('SELECT id, guest_token FROM orders WHERE paypal_order_id = ?').get(paypalOrderId);
+      if (dup) return { id: dup.id, guest_token: dup.guest_token || '' };
+    }
+    const user = ensureOrderCustomer(actor, quote.customerName, quote.phone);
+    const state = orderingState(quote.settings);
+    if (!extras.skipCapacity && !state.accepting) throw new HttpError(409, reasonMessage(state.reason, quote.settings), state.reason);
 
     const mine = db
       .prepare(`SELECT COUNT(*) AS n FROM orders WHERE user_id = ? AND status IN (${ACTIVE_SQL})`)
       .get(user.id).n;
-    if (mine >= settings.max_active_per_customer) {
+    if (!extras.skipCapacity && mine >= quote.settings.max_active_per_customer) {
       throw new HttpError(409, 'Ke tashmë një porosi në rrugë. Prit derisa të dorëzohet.', 'CUSTOMER_LIMIT');
     }
 
-    const ids = [...qtyById.keys()];
-    const products = db
-      .prepare(`SELECT * FROM products WHERE id IN (${ids.map(() => '?').join(',')})`)
-      .all(...ids);
-    if (products.length !== ids.length) throw new HttpError(400, 'Disa produkte s’janë më. Rifresko listen.');
-
-    // Prices always come from the database, never from the browser.
-    let subtotal = 0;
-    let cost = 0;
-    const lines = products.map((p) => {
-      if (!p.available) throw new HttpError(409, `${p.name} s’është i disponueshëm tani`, 'UNAVAILABLE');
-      if (p.price_cents <= 0) throw new HttpError(409, `${p.name} s’ka çmim ende. Andi e vendos te paneli.`, 'UNAVAILABLE');
-      const q = qtyById.get(p.id);
-      subtotal += p.price_cents * q;
-      cost += p.cost_cents * q;
-      return { p, q };
-    });
-
-    if (subtotal < settings.min_order_cents) {
-      throw new HttpError(400, `Porosia minimale është €${(settings.min_order_cents / 100).toFixed(0)}`, 'MIN_ORDER');
-    }
-
-    const fee = quoteDeliveryFeeCents(lat, lng, settings);
-    const promo = applyPromo(body?.promo_code, fee);
     const now = new Date();
     const createdAt = now.toISOString();
     const etaFrom = new Date(now.getTime() + 20 * 60e3).toISOString();
@@ -161,27 +207,31 @@ export function createOrder(actor, body) {
     const res = db
       .prepare(
         `INSERT INTO orders (number, user_id, customer_name, phone, address, notes, lat, lng, status,
+          payment_method, paid, paypal_order_id,
           subtotal_cents, delivery_fee_cents, total_cents, cost_cents, fuel_cost_cents, discount_cents, discount_label, promo_code,
           guest_token, eta_from, eta_to, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         'TMP-' + createdAt + Math.random(),
         user.id,
-        customerName,
-        phone,
-        address,
-        notes,
-        lat,
-        lng,
-        subtotal,
-        fee,
-        subtotal + fee - promo.discount_cents,
-        cost,
-        settings.fuel_cost_cents,
-        promo.discount_cents,
-        promo.discount_label,
-        promo.promo_code,
+        quote.customerName,
+        quote.phone,
+        quote.address,
+        quote.notes,
+        quote.lat,
+        quote.lng,
+        paymentMethod,
+        paid,
+        paypalOrderId,
+        quote.subtotal,
+        quote.fee,
+        quote.total_cents,
+        quote.cost,
+        quote.settings.fuel_cost_cents,
+        quote.promo.discount_cents,
+        quote.promo.discount_label,
+        quote.promo.promo_code,
         guestToken,
         etaFrom,
         etaTo,
@@ -196,10 +246,8 @@ export function createOrder(actor, body) {
       `INSERT INTO order_items (order_id, product_id, name, category, unit_price_cents, unit_cost_cents, quantity, line_total_cents)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     );
-    const partnerName = new Map(db.prepare('SELECT slug, name FROM partners').all().map((r) => [r.slug, r.name]));
-    for (const { p, q } of lines) {
-      const name = p.partner && partnerName.has(p.partner) ? `${partnerName.get(p.partner)} · ${p.name}` : p.name;
-      insItem.run(orderId, p.id, name, p.category, p.price_cents, p.cost_cents, q, p.price_cents * q);
+    for (const l of quote.lines) {
+      insItem.run(orderId, l.product_id, l.name, l.category, l.unit_price_cents, l.unit_cost_cents, l.quantity, l.unit_price_cents * l.quantity);
     }
     db.prepare(
       "INSERT INTO order_status_history (order_id, status, changed_by, created_at) VALUES (?, 'PENDING', ?, ?)",
@@ -309,6 +357,7 @@ export function customerView(o, items, withHistory = false) {
     lat: o.lat,
     lng: o.lng,
     payment_method: o.payment_method,
+    paid: !!o.paid,
     subtotal_cents: o.subtotal_cents,
     delivery_fee_cents: o.delivery_fee_cents,
     discount_cents: o.discount_cents || 0,

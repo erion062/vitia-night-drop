@@ -23,7 +23,7 @@ function orderText(order) {
     order.phone,
     order.address,
     items + extra,
-    `Total *${euro(order.total_cents)}* cash`,
+    `Total *${euro(order.total_cents)}* ${order.payment_method === 'paypal' || order.paid ? 'PAID PayPal' : 'cash'}`,
     order.promo_code ? `Code ${order.promo_code}` : '',
     notes,
     adminUrl(),

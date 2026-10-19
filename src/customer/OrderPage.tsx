@@ -126,7 +126,8 @@ export default function OrderPage() {
         </div>
         <Totals subtotal={o.subtotal_cents} fee={o.delivery_fee_cents} discount={o.discount_cents} discountLabel={o.discount_label} />
         <p className="hint">
-          <Icon name="euro" size={14} /> Pagesa në dorëzim
+          <Icon name="euro" size={14} />{' '}
+          {o.paid || o.payment_method === 'paypal' ? 'E paguave me Apple Pay / kartë (PayPal)' : 'Pagesa në dorëzim'}
         </p>
       </section>
 

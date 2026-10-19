@@ -57,9 +57,15 @@ export function OrderActions({ order, big, showNavigate }: { order: AdminOrder; 
         </div>
       )}
       {next && next.to === 'DELIVERED' ? (
+        order.paid || order.payment_method === 'paypal' ? (
+          <button className={`${cls} btn-primary btn-block`} disabled={busy} onClick={() => go('DELIVERED')}>
+            <Icon name="check" /> MARK DELIVERED · ALREADY PAID
+          </button>
+        ) : (
         <button className={`${cls} btn-primary btn-block`} disabled={busy} onClick={() => setPaying(true)}>
           <Icon name="euro" /> GET PAID · MARK DELIVERED
         </button>
+        )
       ) : (
         next && (
           <button className={`${cls} btn-primary btn-block`} disabled={busy} onClick={() => go(next.to)}>
@@ -81,7 +87,10 @@ export function OrderActions({ order, big, showNavigate }: { order: AdminOrder; 
           }}
         />
       )}
-      {order.status === 'DELIVERED' && order.cash_received_cents != null && (
+      {order.status === 'DELIVERED' && (order.paid || order.payment_method === 'paypal') && (
+        <p className="muted small">Paid via PayPal · no cash at the door</p>
+      )}
+      {order.status === 'DELIVERED' && order.cash_received_cents != null && !(order.paid || order.payment_method === 'paypal') && (
         <p className="muted small">
           Paid {euro(order.cash_received_cents)} · change {euro(order.cash_received_cents - order.total_cents)}
           {order.discount_cents > 0 && ` · ${order.discount_label} (−${euro(order.discount_cents)})`}
@@ -156,7 +165,7 @@ export function OrderCard({ order, selected, onSelect }: { order: AdminOrder; se
           ))}
         </ul>
         <div className="oc-total">
-          <span>Total (cash)</span>
+          <span>{order.paid || order.payment_method === 'paypal' ? 'Total (PayPal paid)' : 'Total (cash)'}</span>
           <b>{euro(order.total_cents)}</b>
         </div>
       </div>

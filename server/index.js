@@ -8,6 +8,7 @@ import { openStream } from './realtime.js';
 import adminRoutes from './routes/admin.js';
 import authRoutes from './routes/auth.js';
 import orderRoutes from './routes/orders.js';
+import paypalRoutes from './routes/paypal.js';
 import publicRoutes from './routes/public.js';
 import partnerRoutes from './routes/partner.js';
 import devRoutes from './routes/dev.js';
@@ -27,16 +28,17 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('Permissions-Policy', 'geolocation=(self), camera=(), microphone=()');
+  res.setHeader('Permissions-Policy', 'geolocation=(self), camera=(), microphone=(), payment=*');
   if (config.isProd) res.setHeader('Strict-Transport-Security', 'max-age=15552000');
   res.setHeader(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self'",
-      "style-src 'self' 'unsafe-inline'",
+      "script-src 'self' https://www.paypal.com https://www.sandbox.paypal.com https://www.paypalobjects.com",
+      "style-src 'self' 'unsafe-inline' https://www.paypal.com https://www.sandbox.paypal.com",
       "img-src 'self' data: blob: https:",
-      `connect-src 'self' ${config.osrmUrl}`,
+      `connect-src 'self' ${config.osrmUrl} https://*.paypal.com https://*.paypalobjects.com https://*.apple.com`,
+      'frame-src https://www.paypal.com https://www.sandbox.paypal.com https://www.paypalobjects.com https://applepay.cdn-apple.com',
       "font-src 'self' data:",
       "manifest-src 'self'",
       "worker-src 'self'",
@@ -62,6 +64,7 @@ api.get('/stream', requireAuth, openStream);
 api.use('/', publicRoutes);
 api.use('/auth', authRoutes);
 api.use('/orders', orderRoutes);
+api.use('/paypal', paypalRoutes);
 if (config.simulation) {
   api.use('/admin/dev', devRoutes);
   console.warn('[vnd] SIMULATION MODE ENABLED (development only)');

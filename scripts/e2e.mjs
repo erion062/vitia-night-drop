@@ -17,6 +17,10 @@ const server = spawn(process.execPath, ['server/index.js'], {
     ADMIN_PHONE: '044999999',
     ADMIN_PASSWORD: 'e2e-admin-pass',
     ENABLE_SIMULATION: 'false',
+    // Keep this process cash-only even if the developer .env has live PayPal keys.
+    PAYPAL_CLIENT_ID: '',
+    PAYPAL_SECRET: '',
+    PAYPAL_ENV: '',
   },
   stdio: ['ignore', 'pipe', 'pipe'],
 });
@@ -159,7 +163,17 @@ async function main() {
   ok(r.status === 400 && /2\.5 km/.test(r.data.error), 'old area now outside the moved radius');
   r = await admin.req('GET', '/config');
   ok(r.data.base_lat === 42.66 && r.data.service_radius_km === 2.5, 'public config exposes the delivery area');
+  ok(r.data.paypal && r.data.paypal.enabled === false, 'paypal hidden without credentials');
+  ok((await alice.req('POST', '/paypal/orders', {})).status === 503, 'paypal create 503 without credentials');
+  ok((await alice.req('POST', '/paypal/orders/TESTORDER1/capture', {})).status === 503, 'paypal capture 503 without credentials');
   await admin.req('PUT', '/admin/settings', { base_lat: 42.3214, base_lng: 21.3583, service_radius_km: 15 });
+  r = await admin.req('PUT', '/admin/settings', { no_go_lat: VITI.lat, no_go_lng: VITI.lng, no_go_radius_km: 0.8 });
+  ok(r.status === 200 && r.data.settings.no_go_radius_km === 0.8, 'admin sets red no-go zone');
+  r = await alice.req('POST', '/orders', { ...order, items: [{ product_id: marlboro.id, quantity: 3 }] });
+  ok(r.status === 400 && r.data.code === 'NO_GO' && /kuq/.test(r.data.error), 'order inside red zone rejected');
+  r = await admin.req('GET', '/config');
+  ok(r.data.no_go_radius_km === 0.8, 'public config exposes the no-go zone');
+  await admin.req('PUT', '/admin/settings', { no_go_radius_km: 0 });
 
   await admin.stream();
   await alice.stream();
@@ -178,7 +192,7 @@ async function main() {
   ok(placed.subtotal_cents === expectedSubtotal, `server computed subtotal ${placed.subtotal_cents}`);
   ok(placed.delivery_fee_cents === 200 && placed.total_cents === expectedSubtotal + 200, 'delivery fee €2 in Viti added server-side');
   ok(/^VND-\d{4}$/.test(placed.number) && placed.status === 'PENDING', `order number ${placed.number}, status PENDING`);
-  ok(placed.payment_method === 'cash', 'payment is cash on delivery');
+  ok(placed.payment_method === 'cash' && !placed.paid, 'payment is cash on delivery');
 
   console.log('8. Admin receives order in real time');
   const newEv = await admin.waitFor('order:new');

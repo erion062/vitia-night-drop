@@ -219,6 +219,15 @@ code {
 .btn-row.wrap > * {
   flex: 0 0 auto;
 }
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 4px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+}
 .icon-btn {
   display: inline-grid;
   place-items: center;
@@ -1117,6 +1126,13 @@ input[type='color'] {
   height: 20px;
   border-width: 3px;
   cursor: grab;
+}
+.area-center.nogo .area-dot {
+  background: #ff4d4d;
+  box-shadow: 0 0 10px rgba(255, 77, 77, 0.85);
+}
+.area-center.nogo .area-ping {
+  border-color: #ff4d4d;
 }
 .area-center .marker-label {
   bottom: 16px;

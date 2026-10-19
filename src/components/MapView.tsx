@@ -26,8 +26,11 @@ export interface ServiceArea {
   center: LatLng;
   radiusKm: number;
   label?: string;
+  tone?: 'green' | 'red';
   /** Makes the area editable: tap the map or drag the centre marker to move it. */
   onMove?: (center: LatLng) => void;
+  /** If set with onMove, map taps move this circle instead of the green delivery area. */
+  tapToMove?: boolean;
 }
 
 interface Props {
@@ -39,6 +42,7 @@ interface Props {
   route?: LatLng[] | null;
   picker?: { value: LatLng | null; onChange: (pos: LatLng) => void };
   serviceArea?: ServiceArea | null;
+  exclusionArea?: ServiceArea | null;
   className?: string;
 }
 
@@ -77,11 +81,11 @@ function placeIcon(p: PlaceMarker, kind: 'dest' | 'place') {
   });
 }
 
-function areaCenterIcon(label: string | undefined, editable: boolean) {
+function areaCenterIcon(label: string | undefined, editable: boolean, tone: 'green' | 'red' = 'green') {
   return L.divIcon({
     className: 'map-icon',
     iconSize: [0, 0],
-    html: `<div class="area-center${editable ? ' editable' : ''}">
+    html: `<div class="area-center${editable ? ' editable' : ''}${tone === 'red' ? ' nogo' : ''}">
       <span class="area-ping"></span><span class="area-dot"></span>
       ${label ? `<div class="marker-label"><b>${esc(label)}</b></div>` : ''}
     </div>`,
@@ -90,7 +94,7 @@ function areaCenterIcon(label: string | undefined, editable: boolean) {
 
 const SWEEP_ICON = L.divIcon({ className: 'map-icon area-sweep-icon', iconSize: [0, 0], html: '<div class="area-sweep"></div>' });
 
-export default function MapView({ center, zoom = 15, driver, destination, places, route, picker, serviceArea, className }: Props) {
+export default function MapView({ center, zoom = 15, driver, destination, places, route, picker, serviceArea, exclusionArea, className }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const layers = useRef<{
@@ -101,6 +105,7 @@ export default function MapView({ center, zoom = 15, driver, destination, places
     routeLine?: L.Polyline;
     picker?: L.Marker;
     area?: AreaLayers;
+    nogo?: AreaLayers;
   }>({ places: [] });
   const follow = useRef(true);
   const [showRecenter, setShowRecenter] = useState(false);
@@ -108,6 +113,8 @@ export default function MapView({ center, zoom = 15, driver, destination, places
   pickerRef.current = picker;
   const areaRef = useRef(serviceArea);
   areaRef.current = serviceArea;
+  const nogoRef = useRef(exclusionArea);
+  nogoRef.current = exclusionArea;
 
   // Create the map once.
   useEffect(() => {
@@ -136,7 +143,8 @@ export default function MapView({ center, zoom = 15, driver, destination, places
     m.on('click', (e: L.LeafletMouseEvent) => {
       const p = { lat: e.latlng.lat, lng: e.latlng.lng };
       pickerRef.current?.onChange(p);
-      areaRef.current?.onMove?.(p);
+      if (nogoRef.current?.onMove && nogoRef.current.tapToMove) nogoRef.current.onMove(p);
+      else areaRef.current?.onMove?.(p);
     });
     map.current = m;
     const ro = new ResizeObserver(() => m.invalidateSize());
@@ -212,6 +220,40 @@ export default function MapView({ center, zoom = 15, driver, destination, places
     sizeSweep();
     if (created && follow.current) fit();
   }, [serviceArea?.center.lat, serviceArea?.center.lng, serviceArea?.radiusKm, serviceArea?.label, editable, !!serviceArea]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const nogoEditable = !!exclusionArea?.onMove;
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+    const l = layers.current;
+    if (l.nogo && (!exclusionArea || exclusionArea.radiusKm <= 0 || l.nogo.editable !== nogoEditable || l.nogo.label !== exclusionArea.label)) {
+      [l.nogo.ring, ...l.nogo.inner, l.nogo.sweep, l.nogo.center].forEach((x) => x.remove());
+      l.nogo = undefined;
+    }
+    if (!exclusionArea || exclusionArea.radiusKm <= 0) return;
+    const c: [number, number] = [exclusionArea.center.lat, exclusionArea.center.lng];
+    const r = exclusionArea.radiusKm * 1000;
+    if (!l.nogo) {
+      const ring = L.circle(c, { radius: r, color: '#ff4d4d', weight: 2, opacity: 0.95, fillColor: '#ff4d4d', fillOpacity: 0.16, interactive: false }).addTo(m);
+      const centerMk = L.marker(c, {
+        icon: areaCenterIcon(exclusionArea.label || 'No orders', nogoEditable, 'red'),
+        draggable: nogoEditable,
+        interactive: nogoEditable,
+        keyboard: false,
+        zIndexOffset: -400,
+      }).addTo(m);
+      centerMk.on('drag', () => ring.setLatLng(centerMk.getLatLng()));
+      centerMk.on('dragend', () => {
+        const p = centerMk.getLatLng();
+        nogoRef.current?.onMove?.({ lat: p.lat, lng: p.lng });
+      });
+      l.nogo = { ring, inner: [], sweep: L.marker(c, { icon: SWEEP_ICON, interactive: false, keyboard: false, opacity: 0 }), center: centerMk, editable: nogoEditable, label: exclusionArea.label };
+    } else {
+      l.nogo.ring.setLatLng(c);
+      l.nogo.center.setLatLng(c);
+      l.nogo.ring.setRadius(r);
+    }
+  }, [exclusionArea?.center.lat, exclusionArea?.center.lng, exclusionArea?.radiusKm, exclusionArea?.label, nogoEditable, !!exclusionArea]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Driver marker
   useEffect(() => {

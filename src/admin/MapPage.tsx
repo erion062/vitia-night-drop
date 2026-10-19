@@ -27,6 +27,7 @@ export default function MapPage() {
             .map((o) => ({ id: o.id, pos: o, label: `#${o.number}`, sub: STATUS_LABEL[o.status], onClick: () => setSelectedId(o.id) }))}
           route={route?.coords}
           serviceArea={settings ? { center: { lat: settings.base_lat, lng: settings.base_lng }, radiusKm: settings.service_radius_km } : null}
+          exclusionArea={settings && settings.no_go_radius_km > 0 ? { center: { lat: settings.no_go_lat, lng: settings.no_go_lng }, radiusKm: settings.no_go_radius_km, label: 'No orders' } : null}
           className="map-big"
         />
         <aside className="panel">

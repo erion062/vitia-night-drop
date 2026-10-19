@@ -62,6 +62,9 @@ export interface PublicConfig {
   base_lat: number;
   base_lng: number;
   service_radius_km: number;
+  no_go_lat?: number;
+  no_go_lng?: number;
+  no_go_radius_km?: number;
   online: boolean;
   open_now: boolean;
   accepting_orders: boolean;
@@ -72,6 +75,7 @@ export interface PublicConfig {
   osrm_url: string;
   map_tiles: MapTiles;
   announcements: Announcement[];
+  paypal?: { enabled: boolean; client_id?: string; env?: string };
 }
 
 export type AnnouncementTone = 'promo' | 'info' | 'warning';
@@ -117,6 +121,7 @@ export interface CustomerOrder {
   lat: number;
   lng: number;
   payment_method: string;
+  paid?: boolean;
   subtotal_cents: number;
   delivery_fee_cents: number;
   discount_cents: number;
@@ -197,6 +202,9 @@ export interface Settings {
   base_lat: number;
   base_lng: number;
   service_radius_km: number;
+  no_go_lat: number;
+  no_go_lng: number;
+  no_go_radius_km: number;
   whatsapp_phone: string;
   whatsapp_apikey: string;
 }

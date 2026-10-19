@@ -89,6 +89,7 @@ export default function Dashboard() {
             driver={driverPos ? { pos: driverPos, heading: driverPos.heading, label: 'You', sub: settings?.vehicle_name } : null}
             places={orders.map((o) => ({ id: o.id, pos: o, label: `#${o.number}`, sub: STATUS_LABEL[o.status], highlight: o.status === 'ON_THE_WAY' }))}
             serviceArea={settings ? { center: { lat: settings.base_lat, lng: settings.base_lng }, radiusKm: settings.service_radius_km } : null}
+            exclusionArea={settings && settings.no_go_radius_km > 0 ? { center: { lat: settings.no_go_lat, lng: settings.no_go_lng }, radiusKm: settings.no_go_radius_km, label: 'No orders' } : null}
             className="map-dash"
           />
           <GpsPanel compact />

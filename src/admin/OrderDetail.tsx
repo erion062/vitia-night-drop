@@ -135,7 +135,7 @@ export default function OrderDetail() {
             </div>
           )}
           <div className="kv total">
-            <span>Revenue (cash to collect)</span>
+            <span>{order.paid || order.payment_method === 'paypal' ? 'Revenue (paid via PayPal)' : 'Revenue (cash to collect)'}</span>
             <b>{euro(order.total_cents)}</b>
           </div>
           <div className="kv muted">

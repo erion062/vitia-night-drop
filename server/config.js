@@ -150,6 +150,11 @@ export const config = {
     appId: (env.FACEBOOK_APP_ID || '').trim(),
     appSecret: (env.FACEBOOK_APP_SECRET || '').trim(),
   },
+  paypal: {
+    clientId: (env.PAYPAL_CLIENT_ID || '').trim(),
+    secret: (env.PAYPAL_SECRET || '').trim(),
+    env: (env.PAYPAL_ENV || (isProd ? 'live' : 'sandbox')).trim() === 'live' ? 'live' : 'sandbox',
+  },
   // Simulation can never be switched on in production, even if the env var is set.
   simulation: !isProd && env.ENABLE_SIMULATION === 'true',
   allowedOrigins: (env.ALLOWED_ORIGINS || '')

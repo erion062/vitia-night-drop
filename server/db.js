@@ -224,6 +224,8 @@ for (const [name, def] of [
   ['cash_received_cents', 'INTEGER'],
   ['promo_code', "TEXT NOT NULL DEFAULT ''"],
   ['guest_token', "TEXT NOT NULL DEFAULT ''"],
+  ['paid', 'INTEGER NOT NULL DEFAULT 0'],
+  ['paypal_order_id', "TEXT NOT NULL DEFAULT ''"],
 ]) {
   if (!orderCols.has(name)) db.exec(`ALTER TABLE orders ADD COLUMN ${name} ${def}`);
 }
@@ -236,6 +238,14 @@ for (const [name, def] of [
 }
 const partnerCols = new Set(db.prepare('PRAGMA table_info(partners)').all().map((c) => c.name));
 if (!partnerCols.has('kind')) db.exec("ALTER TABLE partners ADD COLUMN kind TEXT NOT NULL DEFAULT 'restaurant'");
+
+db.exec(`CREATE TABLE IF NOT EXISTS paypal_intents (
+  paypal_order_id TEXT PRIMARY KEY,
+  amount_cents INTEGER NOT NULL,
+  payload_json TEXT NOT NULL,
+  vnd_order_id INTEGER,
+  created_at TEXT NOT NULL
+)`);
 
 // Partner shop logins need role=partner and partner_slug. SQLite cannot alter a CHECK.
 const usersSql = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'").get()?.sql || '';
