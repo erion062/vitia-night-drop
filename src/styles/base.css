@@ -26,6 +26,14 @@
   color-scheme: dark;
 }
 
+body.halloween {
+  --accent: #ff7a18;
+  --accent-ink: #1a0c04;
+  --accent-dim: rgba(255, 122, 24, 0.14);
+  --accent-line: rgba(255, 122, 24, 0.4);
+  --bg: #140e0c;
+}
+
 *,
 *::before,
 *::after {

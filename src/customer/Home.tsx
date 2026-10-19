@@ -5,7 +5,7 @@ import { Logo } from '../components/Logo';
 import { CATEGORY_META } from '../components/ui';
 import { api } from '../lib/api';
 import { guestOrders } from '../lib/guestOrders';
-import { ACTIVE_STATUSES, belgradeHour, euro, euroShort } from '../lib/format';
+import { ACTIVE_STATUSES, belgradeHour, euro, euroShort, isHalloween } from '../lib/format';
 import { useStreamEvent } from '../lib/stream';
 import { useAuth } from '../state/auth';
 import { useCart } from '../state/cart';
@@ -55,6 +55,7 @@ export default function Home() {
       <section className="hero">
         <Logo size="lg" tagline />
         <p className="hero-pitch">{heroPitch(hour)}</p>
+        {isHalloween() && <p className="hero-halloween">Halloween · deri më 31 tetor</p>}
         <div className="hero-status">
           <StatusPill reason={config?.reason} online={config ? config.online : undefined} />
         </div>

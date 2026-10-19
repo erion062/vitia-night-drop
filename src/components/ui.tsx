@@ -117,7 +117,7 @@ export function StatusBadge({ status, sq }: { status: OrderStatus; sq?: boolean 
 const STEPS: { key: string; label: string; doneLabel?: string; at: (o: TimelineOrder) => string | null; reached: OrderStatus[] }[] = [
   { key: 'received', label: 'Porosia u mor', at: (o) => o.created_at, reached: ['PENDING', 'ACCEPTED', 'PURCHASING', 'PURCHASED', 'ON_THE_WAY', 'DELIVERED'] },
   { key: 'accepted', label: 'Pranuar', at: (o) => o.accepted_at, reached: ['ACCEPTED', 'PURCHASING', 'PURCHASED', 'ON_THE_WAY', 'DELIVERED'] },
-  { key: 'purchased', label: 'Duke bli', doneLabel: 'U ble', at: (o) => o.purchased_at || o.purchasing_at, reached: ['PURCHASED', 'ON_THE_WAY', 'DELIVERED'] },
+  { key: 'purchased', label: 'Duke Bler', doneLabel: 'U ble', at: (o) => o.purchased_at || o.purchasing_at, reached: ['PURCHASED', 'ON_THE_WAY', 'DELIVERED'] },
   { key: 'onway', label: 'Në rrugë', at: (o) => o.on_the_way_at, reached: ['ON_THE_WAY', 'DELIVERED'] },
   { key: 'delivered', label: 'Dorëzuar', at: (o) => o.delivered_at, reached: ['DELIVERED'] },
 ];

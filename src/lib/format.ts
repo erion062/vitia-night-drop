@@ -53,6 +53,14 @@ export function belgradeHour(d = new Date()) {
   return Number(new Intl.DateTimeFormat('en-GB', { timeZone: TIMEZONE, hour: 'numeric', hourCycle: 'h23' }).format(d));
 }
 
+/** Halloween look and ads: 1–31 October in Europe/Belgrade. */
+export function isHalloween(d = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-GB', { timeZone: TIMEZONE, month: 'numeric', day: 'numeric' }).formatToParts(d);
+  const month = Number(parts.find((p) => p.type === 'month')?.value);
+  const day = Number(parts.find((p) => p.type === 'day')?.value);
+  return month === 10 && day >= 1 && day <= 31;
+}
+
 /** Today's business date (06:00 cut-off) as YYYY-MM-DD, matching the server. */
 export function businessDate(d = new Date()) {
   const shifted = new Date(d.getTime() - 6 * 3600e3);

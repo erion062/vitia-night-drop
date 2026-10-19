@@ -1,11 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { AnnouncementBar } from '../components/AnnouncementBar';
 import { Icon } from '../components/Icon';
 import { LogoMark } from '../components/Logo';
+import { isHalloween } from '../lib/format';
 import { rememberPromoCode } from '../lib/promo';
 import { useCart } from '../state/cart';
 import { useConfig } from '../state/config';
+import { HalloweenAds, halloweenAdsPending } from './HalloweenAds';
 
 export function StatusPill({ reason, online }: { reason: string | null | undefined; online?: boolean }) {
   if (online === undefined && reason == null) return <span className="pill pill-off"><i />PO LIDHET</span>;
@@ -48,6 +50,14 @@ export default function CustomerLayout() {
     if (c) rememberPromoCode(c);
   }, [params]);
   const hideNav = pathname.endsWith('/track') || pathname === '/checkout';
+  const halloween = isHalloween();
+  const [adsOpen, setAdsOpen] = useState(() => halloween && halloweenAdsPending());
+
+  useEffect(() => {
+    document.body.classList.toggle('halloween', halloween);
+    return () => document.body.classList.remove('halloween');
+  }, [halloween]);
+
   return (
     <div className={`app-shell${hideNav ? '' : ' has-nav'}`}>
       {!hideNav && (
@@ -102,6 +112,7 @@ export default function CustomerLayout() {
           <Outlet />
         </main>
       </div>
+      {adsOpen && halloween && !hideNav && <HalloweenAds onClose={() => setAdsOpen(false)} />}
     </div>
   );
 }

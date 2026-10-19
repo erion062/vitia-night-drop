@@ -4,7 +4,7 @@ import type { OrderStatus } from '../types';
 export const SQ_STATUS: Record<OrderStatus, string> = {
   PENDING: 'Në pritje',
   ACCEPTED: 'Pranuar',
-  PURCHASING: 'Duke bli',
+  PURCHASING: 'Duke Bler',
   PURCHASED: 'U ble',
   ON_THE_WAY: 'Në rrugë',
   DELIVERED: 'Dorëzuar',

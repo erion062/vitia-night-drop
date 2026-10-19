@@ -1284,3 +1284,68 @@
   min-height: 50px;
   margin-bottom: 0;
 }
+.hallo-ads {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(8, 4, 2, 0.86);
+}
+.hallo-ads-card {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 12px;
+}
+.hallo-ads-kicker {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.hallo-ads-card img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+.hallo-ads-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.hallo-ads-dots button {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: var(--border);
+}
+.hallo-ads-dots button.on {
+  background: var(--accent);
+}
+.hallo-ads-row {
+  display: flex;
+  gap: 8px;
+}
+.hallo-ads-row .btn {
+  flex: 1;
+}
+.hallo-ads-skip {
+  width: 100%;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+.hero-halloween {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--accent);
+}
