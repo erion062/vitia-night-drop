@@ -4,6 +4,7 @@ import { Icon } from '../components/Icon';
 import { Logo, LogoMark } from '../components/Logo';
 import { Spinner } from '../components/ui';
 import { clock } from '../lib/format';
+import { useOpsTheme } from '../lib/opsTheme';
 import { useStreamConnected } from '../lib/stream';
 import { useAuth } from '../state/auth';
 import { AdminProvider, useAdmin } from './AdminContext';
@@ -178,6 +179,7 @@ function Shell() {
 }
 
 export default function AdminLayout() {
+  useOpsTheme();
   const { user, loading } = useAuth();
   if (loading) return <Spinner label="Loading…" />;
   if (!user) return <Navigate to="/login?next=/admin" replace />;

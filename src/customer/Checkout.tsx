@@ -17,6 +17,8 @@ import { TopBar } from './CustomerLayout';
 import { PaypalButtons } from './PaypalButtons';
 
 const LAST_ADDRESS = 'vnd_last_address';
+/** Keep cash-only until PayPal / Apple Pay is actually switched on. */
+const SHOW_PAYPAL = false;
 
 export default function Checkout() {
   const { user } = useAuth();
@@ -44,6 +46,7 @@ export default function Checkout() {
   const [promo, setPromo] = useState<{ code: string; percent: number; label: string } | null>(null);
   const [promoMsg, setPromoMsg] = useState('');
   const [pay, setPay] = useState<'paypal' | 'cash'>('cash');
+  const [step, setStep] = useState(0);
 
   useEffect(() => {
     const code = savedPromoCode();
@@ -62,10 +65,13 @@ export default function Checkout() {
     if (user?.phone) setPhone((p) => p || user.phone);
   }, [user]);
 
-  const paypalOn = !!config?.paypal?.enabled && !!config.paypal.client_id;
+  const paypalOn = SHOW_PAYPAL && !!config?.paypal?.enabled && !!config.paypal.client_id;
   useEffect(() => {
     if (paypalOn) setPay('paypal');
   }, [paypalOn]);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
 
   const fee = quoteDeliveryFeeCents(pos, config);
   const discount = promo ? Math.round((fee * promo.percent) / 100) : 0;
@@ -157,9 +163,33 @@ export default function Checkout() {
     nav(`/orders/${r.order.number}?placed=1`, { replace: true });
   }
 
+  function goNext() {
+    setError('');
+    const e: Record<string, string> = {};
+    if (step === 0) {
+      if (address.trim().length < 5) e.address = 'Shkruaj rrugën dhe numrin e shtëpisë';
+      if (!pos) e.pos = 'Vendos pin-in te dera në hartë';
+      setErrors(e);
+      if (Object.keys(e).length || outside || insideNoGo) return;
+      setStep(1);
+      return;
+    }
+    if (step === 1) {
+      if (name.trim().length < 2) e.name = 'Shkruaj emrin';
+      if (phone.replace(/\D/g, '').length < 8) e.phone = 'Shkruaj një numër telefoni të vlefshëm';
+      setErrors(e);
+      if (Object.keys(e).length) return;
+      setStep(2);
+    }
+  }
+
   async function submit(ev: FormEvent) {
     ev.preventDefault();
     setError('');
+    if (step < 2) {
+      goNext();
+      return;
+    }
     const body = checkoutBody();
     if (!body) return;
     setBusy(true);
@@ -180,13 +210,63 @@ export default function Checkout() {
   const blocked = config && !config.accepting_orders;
   if (cart.lines.length === 0 && !busy) return <Navigate to="/basket" replace />;
 
+  const stepLabel = ['Ku ta sjellim', 'Emri dhe numri', 'Konfirmo porosinë'][step];
+
   return (
     <div className="page checkout">
       <TopBar title="Vendos porosinë" back />
+      <nav className="checkout-progress" aria-label="Hapat e porosisë">
+        {(
+          [
+            ['Adresa', 0],
+            ['Të dhënat', 1],
+            ['Porosia', 2],
+          ] as const
+        ).map(([label, i]) => (
+          <button
+            key={label}
+            type="button"
+            className={step === i ? 'on' : step > i ? 'done' : ''}
+            onClick={() => i < step && setStep(i)}
+            disabled={i > step}
+          >
+            <span className="n">{i + 1}</span>
+            {label}
+          </button>
+        ))}
+      </nav>
       <form onSubmit={submit} noValidate>
+        {step > 0 && (
+          <div className="checkout-recap">
+            <Icon name="pin" size={18} />
+            <div>
+              <b>{address || 'Adresa'}</b>
+              <span>Hapi 1 · ku ta sjellim</span>
+            </div>
+            <button type="button" onClick={() => setStep(0)}>
+              Ndrysho
+            </button>
+          </div>
+        )}
+        {step > 1 && (
+          <div className="checkout-recap">
+            <Icon name="user" size={18} />
+            <div>
+              <b>
+                {name} · {phone}
+              </b>
+              <span>Hapi 2 · emri dhe numri</span>
+            </div>
+            <button type="button" onClick={() => setStep(1)}>
+              Ndrysho
+            </button>
+          </div>
+        )}
+
+        {step === 0 && (
         <section className="card">
           <h3 className="card-title">
-            <span className="step">1</span> Ku ta sjellim
+            <span className="step">1</span> {stepLabel}
           </h3>
           <button type="button" className="btn btn-outline btn-block" onClick={locate} disabled={locating}>
             <Icon name="gps" size={18} /> {locating ? 'Po të gjejmë…' : 'Përdor lokacionin tim'}
@@ -221,21 +301,22 @@ export default function Checkout() {
             </div>
           )}
           <Field label="Adresa e dorëzimit" icon="pin" placeholder="p.sh. Rr. Skënderbeu 12, Viti" value={address} onChange={(e) => setAddress(e.target.value)} error={errors.address} maxLength={200} autoComplete="street-address" />
-          <label className="field">
-            <span className="field-label">Shënime për derën (opsionale)</span>
-            <textarea className="textarea" placeholder="p.sh. bie zilen, kati 2, dera blu…" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={300} rows={2} />
-          </label>
         </section>
+        )}
 
+        {step === 1 && (
         <section className="card">
           <h3 className="card-title">
-            <span className="step">2</span> Të dhënat e tua
+            <span className="step">2</span> {stepLabel}
           </h3>
           <p className="hint">S’ke nevojë për llogari — mjafton emri dhe numri. Operatori të telefonon nëse duhet.</p>
           <Field label="Emri" icon="user" value={name} onChange={(e) => setName(e.target.value)} error={errors.name} autoComplete="name" maxLength={80} />
           <Field label="Numri i telefonit" icon="phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} error={errors.phone} autoComplete="tel" />
         </section>
+        )}
 
+        {step === 2 && (
+        <>
         <section className="card">
           <h3 className="card-title">
             <span className="step">3</span> Pagesa
@@ -305,7 +386,7 @@ export default function Checkout() {
               Apliko
             </button>
           </div>
-          {promoMsg && <p className={promo ? 'accent' : 'field-error'}>{promoMsg}</p>}
+          {promoMsg && <p className={promo ? 'promo-ok' : 'field-error'}>{promoMsg}</p>}
           <Totals
             subtotal={cart.subtotal_cents}
             fee={fee}
@@ -313,16 +394,28 @@ export default function Checkout() {
             discountLabel={promo?.label}
             feeHint={pos && config ? `${deliveryKm(pos, config).toFixed(1)} km` : 'në Viti, rritet me distancën'}
           />
+          <label className="field">
+            <span className="field-label">Shënime për derën (opsionale)</span>
+            <textarea className="textarea" placeholder="p.sh. bie zilen, kati 2, dera blu…" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={300} rows={2} />
+          </label>
         </section>
+        </>
+        )}
 
         <ErrorBox>{error}</ErrorBox>
         {blocked && <ErrorBox>{config.reason === 'BUSY' ? 'VND ËSHTË I ZËNË TANI. ' : ''}{config.reason_message}</ErrorBox>}
 
-        {pay === 'cash' && (
+        {(step < 2 || pay === 'cash') && (
           <div className="sticky-cta">
-            <button className="btn btn-primary btn-xl" type="submit" disabled={busy || !!blocked || outside || insideNoGo || cart.subtotal_cents < min}>
-              {busy ? 'Po vendoset porosia…' : outside ? 'ENDE S’JEMI TE ZONA JOTE' : insideNoGo ? 'KJO ZONË S’PRANON POROSI' : `VENDOS POROSINË · ${euro(due)}`}
-            </button>
+            {step < 2 ? (
+              <button className="btn btn-primary btn-xl" type="submit" disabled={step === 0 && (outside || insideNoGo)}>
+                {step === 0 && outside ? 'ENDE S’JEMI TE ZONA JOTE' : step === 0 && insideNoGo ? 'KJO ZONË S’PRANON POROSI' : 'VAZHDO'}
+              </button>
+            ) : (
+              <button className="btn btn-primary btn-xl" type="submit" disabled={busy || !!blocked || outside || insideNoGo || cart.subtotal_cents < min}>
+                {busy ? 'Po vendoset porosia…' : outside ? 'ENDE S’JEMI TE ZONA JOTE' : insideNoGo ? 'KJO ZONË S’PRANON POROSI' : `VENDOS POROSINË · ${euro(due)}`}
+              </button>
+            )}
           </div>
         )}
       </form>

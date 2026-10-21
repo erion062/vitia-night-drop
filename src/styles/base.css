@@ -1,4 +1,36 @@
 :root {
+  --bg: #ffffff;
+  --surface: #f4f6f4;
+  --surface-2: #ffffff;
+  --surface-3: #e8ece8;
+  --border: #e3e7e3;
+  --border-strong: #d0d5d0;
+  --text: #202124;
+  --muted: #5f6368;
+  --faint: #80868b;
+  --accent: #00ff66;
+  --accent-ink: #04140a;
+  --accent-dim: rgba(0, 255, 102, 0.16);
+  --accent-line: rgba(0, 255, 102, 0.45);
+  --promo: #ff9f1c;
+  --promo-ink: #2a1600;
+  --promo-dim: rgba(255, 159, 28, 0.16);
+  --danger: #d93025;
+  --danger-dim: rgba(217, 48, 37, 0.1);
+  --warn: #ff9f1c;
+  --warn-dim: rgba(255, 159, 28, 0.14);
+  --blue: #1a73e8;
+  --blue-dim: rgba(26, 115, 232, 0.1);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color-scheme: light;
+}
+
+html.ops,
+body.ops {
   --bg: #121212;
   --surface: #181818;
   --surface-2: #1f1f1f;
@@ -12,26 +44,16 @@
   --accent-ink: #04140a;
   --accent-dim: rgba(0, 255, 102, 0.12);
   --accent-line: rgba(0, 255, 102, 0.35);
+  --promo: #ff9f1c;
+  --promo-ink: #2a1600;
+  --promo-dim: rgba(255, 159, 28, 0.16);
   --danger: #ff4d4f;
   --danger-dim: rgba(255, 77, 79, 0.12);
   --warn: #ffb020;
   --warn-dim: rgba(255, 176, 32, 0.12);
   --blue: #4da3ff;
   --blue-dim: rgba(77, 163, 255, 0.12);
-  --radius: 14px;
-  --radius-sm: 10px;
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-top: env(safe-area-inset-top, 0px);
-  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   color-scheme: dark;
-}
-
-body.halloween {
-  --accent: #ff7a18;
-  --accent-ink: #1a0c04;
-  --accent-dim: rgba(255, 122, 24, 0.14);
-  --accent-line: rgba(255, 122, 24, 0.4);
-  --bg: #140e0c;
 }
 
 *,
@@ -132,7 +154,7 @@ code {
 }
 .logo-lg .logo-sub {
   font-size: 13px;
-  color: #cfcfcf;
+  color: var(--muted);
 }
 .logo-tag {
   margin-top: 6px;
@@ -549,7 +571,7 @@ input[type='color'] {
   border-radius: 12px;
   background: var(--danger-dim);
   border: 1px solid rgba(255, 77, 79, 0.35);
-  color: #ff8a8c;
+  color: var(--danger);
   font-size: 14px;
   margin: 10px 0;
 }
@@ -622,13 +644,17 @@ input[type='color'] {
   min-width: 0;
   animation: ann-in 0.35s ease;
 }
+.ann-bar.tone-promo {
+  color: var(--promo-ink);
+  background: var(--promo);
+}
 .ann-bar.tone-info {
   color: var(--text);
-  background: #1f2a3a;
-  border-bottom: 1px solid #2f4a70;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
 }
 .ann-bar.tone-warning {
-  color: #1a1200;
+  color: var(--promo-ink);
   background: var(--warn);
 }
 .ann-count {
@@ -934,7 +960,7 @@ input[type='color'] {
   position: relative;
   border-radius: var(--radius);
   overflow: hidden;
-  background: #0e0e0e;
+  background: var(--surface);
   border: 1px solid var(--border);
   height: 300px;
 }
@@ -946,14 +972,17 @@ input[type='color'] {
 .map {
   position: absolute;
   inset: 0;
-  background: #0e0e0e;
+  background: var(--surface);
 }
 .leaflet-container {
-  background: #0e0e0e;
+  background: var(--surface);
   font-family: var(--font);
 }
 .dark-tiles .leaflet-tile-pane {
   filter: invert(1) hue-rotate(180deg) brightness(0.82) contrast(0.92) saturate(0.35);
+}
+body:not(.ops) .dark-tiles .leaflet-tile-pane {
+  filter: none;
 }
 .leaflet-control-zoom a {
   background: var(--surface-2) !important;
@@ -969,8 +998,8 @@ input[type='color'] {
   overflow: hidden;
 }
 .leaflet-control-attribution {
-  background: rgba(18, 18, 18, 0.7) !important;
-  color: #777 !important;
+  background: color-mix(in srgb, var(--bg) 80%, transparent) !important;
+  color: var(--muted) !important;
   font-size: 9px !important;
 }
 .leaflet-control-attribution a {
@@ -1027,7 +1056,7 @@ input[type='color'] {
   left: 50%;
   bottom: calc(100% + 4px);
   transform: translateX(-50%);
-  background: rgba(18, 18, 18, 0.92);
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
   border: 1px solid var(--accent-line);
   border-radius: 10px;
   padding: 5px 9px;

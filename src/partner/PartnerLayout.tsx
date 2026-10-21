@@ -3,10 +3,12 @@ import { Navigate, NavLink, Outlet } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { Spinner } from '../components/ui';
 import { api } from '../lib/api';
+import { useOpsTheme } from '../lib/opsTheme';
 import { useAuth } from '../state/auth';
 import type { Partner } from '../types';
 
 export default function PartnerLayout() {
+  useOpsTheme();
   const { user, loading, logout } = useAuth();
   const [shop, setShop] = useState<Partner | null>(null);
 
