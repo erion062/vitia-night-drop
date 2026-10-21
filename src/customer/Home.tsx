@@ -5,7 +5,7 @@ import { Logo } from '../components/Logo';
 import { CATEGORY_META } from '../components/ui';
 import { api } from '../lib/api';
 import { guestOrders } from '../lib/guestOrders';
-import { ACTIVE_STATUSES, belgradeHour, euro, euroShort, isHalloween } from '../lib/format';
+import { ACTIVE_STATUSES, belgradeHour, euro, euroShort } from '../lib/format';
 import { useStreamEvent } from '../lib/stream';
 import { useAuth } from '../state/auth';
 import { useCart } from '../state/cart';
@@ -54,8 +54,7 @@ export default function Home() {
       <TopBar />
       <section className="hero">
         <Logo size="lg" tagline />
-        <p className="hero-pitch">{heroPitch(hour)}</p>
-        {isHalloween() && <p className="hero-halloween">Halloween · deri më 31 tetor</p>}
+        <p className="hero-pitch">{heroPitch(hour, config?.open_time)}</p>
         <div className="hero-status">
           <StatusPill reason={config?.reason} online={config ? config.online : undefined} />
         </div>
@@ -86,7 +85,7 @@ export default function Home() {
         <div>
           <Icon name="clock" size={18} />
           <span>Orari</span>
-          <b>{config ? `${config.open_time}–${config.close_time}` : '14:00–23:00'}</b>
+          <b>{config ? `${config.open_time}–${config.close_time}` : '10:00–23:00'}</b>
         </div>
         <div>
           <Icon name="bag" size={18} />

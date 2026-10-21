@@ -31,6 +31,11 @@ export function getSettings() {
     persistSetting('delivery_inner_km', stored.delivery_inner_km);
     persistSetting('delivery_per_km_cents', stored.delivery_per_km_cents);
   }
+  // Shop opens at 10:00 now; migrate the old 14:00 default on next boot.
+  if (stored.open_time === '14:00') {
+    stored.open_time = DEFAULT_SETTINGS.open_time;
+    persistSetting('open_time', stored.open_time);
+  }
   cache = { ...DEFAULT_SETTINGS, ...stored };
   return cache;
 }

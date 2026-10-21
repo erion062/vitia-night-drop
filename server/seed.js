@@ -297,7 +297,7 @@ export const SEED_PRODUCTS = [
 export const DEFAULT_SETTINGS = {
   business_name: 'Vitia Night Drop',
   business_phone: '',
-  open_time: '14:00',
+  open_time: '10:00',
   close_time: '03:00',
   delivery_fee_cents: 200,
   delivery_inner_km: 3,

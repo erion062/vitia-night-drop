@@ -121,7 +121,7 @@ export default function Account() {
       )}
 
       <p className="fine-print">
-        VITIA NIGHT DROP · Viti, Kosovë · {config ? `${config.open_time}–${config.close_time}` : '14:00–23:00'} · Pagesa në dorëzim
+        VITIA NIGHT DROP · Viti, Kosovë · {config ? `${config.open_time}–${config.close_time}` : '10:00–23:00'} · Pagesa në dorëzim
       </p>
     </div>
   );

@@ -116,7 +116,7 @@ export function Login() {
       </Link>
       <div className="auth-foot">
         <span>
-          <Icon name="clock" size={16} /> {config ? `${config.open_time}–${config.close_time}` : '14:00–23:00'}
+          <Icon name="clock" size={16} /> {config ? `${config.open_time}–${config.close_time}` : '10:00–23:00'}
         </span>
         <span>
           <Icon name="pin" size={16} /> Viti, Kosovë

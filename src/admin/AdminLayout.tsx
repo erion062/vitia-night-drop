@@ -69,7 +69,7 @@ function Shell() {
             <Icon name="pin" size={14} /> Viti, Kosovo
           </div>
           <div className="muted">
-            <Icon name="clock" size={14} /> {settings ? `${settings.open_time}–${settings.close_time}` : '14:00–03:00'}
+            <Icon name="clock" size={14} /> {settings ? `${settings.open_time}–${settings.close_time}` : '10:00–03:00'}
           </div>
           <NavLink to="/" className="muted">
             <Icon name="home" size={14} /> Customer site

@@ -39,11 +39,12 @@ export function sqCancelReason(reason?: string | null) {
   return reason || 'Kjo porosi u anulua.';
 }
 
-/** Only the home pitch changes with the clock (Europe/Belgrade, 14:00–23:00). */
-export function heroPitch(hour: number) {
+/** Only the home pitch changes with the clock (Europe/Belgrade). */
+export function heroPitch(hour: number, openTime = '10:00') {
+  const openHour = Number(String(openTime).split(':')[0]) || 10;
   const rest = 'pije, cigare, ushqim. Operatori ta sjell tani, te dera.';
-  if (hour >= 3 && hour < 14) return `Hapemi në 14:00 — pije, cigare, ushqim. Operatori ta sjell te dera.`;
-  if (hour >= 14 && hour < 17) return `Mos dil pas pune — ${rest}`;
+  if (hour >= 3 && hour < openHour) return `Hapemi në ${openTime} — pije, cigare, ushqim. Operatori ta sjell te dera.`;
+  if (hour >= openHour && hour < 17) return `Mos dil pas pune — ${rest}`;
   if (hour >= 17 && hour < 21) return `Mos dil sonte — ${rest}`;
   if (hour >= 21) return `Mos dil natën — ${rest}`;
   return `Mos dil në mesnatë — ${rest}`;

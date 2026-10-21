@@ -50,7 +50,7 @@ export function orderingState(settings = getSettings()) {
 
 const REASON_MESSAGES = {
   OFFLINE: 'VND s’është online tani. Provo përsëri më vonë.',
-  CLOSED: 'VND është mbyllur. Dorëzojmë 14:00–03:00.',
+  CLOSED: 'VND është mbyllur. Dorëzojmë 10:00–03:00.',
   BUSY: 'VND është i zënë tani. Provo sërish pas pak minutash.',
 };
 
