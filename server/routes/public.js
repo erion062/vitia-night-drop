@@ -5,6 +5,7 @@ import { db } from '../db.js';
 import { activeAnnouncements } from '../lib/announcements.js';
 import { orderingState, reasonMessage } from '../lib/orders.js';
 import { previewPromo } from '../lib/promo.js';
+import { maybeApplyNov1PriceRaise } from '../lib/priceRaise.js';
 import { getSettings } from '../lib/settings.js';
 import { ingestTrack } from '../lib/visitors.js';
 
@@ -22,6 +23,7 @@ router.post('/track', trackLimiter, (req, res) => {
 });
 
 router.get('/config', (_req, res) => {
+  maybeApplyNov1PriceRaise();
   const s = getSettings();
   const state = orderingState(s);
   res.set('Cache-Control', 'no-store');
@@ -73,6 +75,7 @@ router.get('/config', (_req, res) => {
 
 // Purchase cost is deliberately excluded from the public catalog.
 router.get('/products', (_req, res) => {
+  maybeApplyNov1PriceRaise();
   const rows = db
     .prepare(
       `SELECT id, name, description, category, price_cents, image_url, accent, available, popular, partner, section

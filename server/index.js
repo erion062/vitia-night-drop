@@ -12,6 +12,7 @@ import paypalRoutes from './routes/paypal.js';
 import publicRoutes from './routes/public.js';
 import partnerRoutes from './routes/partner.js';
 import devRoutes from './routes/dev.js';
+import { maybeApplyNov1PriceRaise } from './lib/priceRaise.js';
 import { HttpError } from './lib/util.js';
 
 ensureAdmin();
@@ -19,6 +20,7 @@ ensureAndiMarket();
 ensureFurraSofra();
 ensureBallerina();
 seedProductsIfEmpty();
+maybeApplyNov1PriceRaise();
 
 const app = express();
 app.disable('x-powered-by');
