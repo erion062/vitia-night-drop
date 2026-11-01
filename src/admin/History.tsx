@@ -4,7 +4,18 @@ import { Empty, Spinner, StatusBadge } from '../components/ui';
 import { api } from '../lib/api';
 import { dateTime, euro } from '../lib/format';
 import { useStreamEvent } from '../lib/stream';
-import type { AdminOrder } from '../types';
+import type { AdminOrder, OrderStatus } from '../types';
+
+const STATUS_FILTERS: { value: '' | OrderStatus; label: string }[] = [
+  { value: '', label: 'All statuses' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'ACCEPTED', label: 'Accepted' },
+  { value: 'PURCHASING', label: 'Purchasing' },
+  { value: 'PURCHASED', label: 'Purchased' },
+  { value: 'ON_THE_WAY', label: 'On the way' },
+  { value: 'DELIVERED', label: 'Delivered' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+];
 
 export default function History() {
   const [f, setF] = useState({ from: '', to: '', status: '', customer: '', number: '' });
@@ -22,9 +33,8 @@ export default function History() {
     const t = setTimeout(load, 250);
     return () => clearTimeout(t);
   }, [load]);
-  useStreamEvent('order:update', (d) => {
-    if (d?.status === 'DELIVERED' || d?.status === 'CANCELLED') load();
-  });
+  useStreamEvent('order:update', load);
+  useStreamEvent('order:new', load);
 
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
   const delivered = (orders || []).filter((o) => o.status === 'DELIVERED');
@@ -33,9 +43,11 @@ export default function History() {
     <div className="adm-page">
       <div className="adm-page-head">
         <div>
-          <h1>Order history</h1>
+          <h1>All orders</h1>
           <p className="muted">
-            {orders ? `${orders.length} orders · revenue ${euro(delivered.reduce((s, o) => s + o.total_cents, 0))} · est. profit ${euro(delivered.reduce((s, o) => s + o.net_profit_cents, 0))}` : ''}
+            {orders
+              ? `${orders.length} shown · delivered revenue ${euro(delivered.reduce((s, o) => s + o.total_cents, 0))} · est. profit ${euro(delivered.reduce((s, o) => s + o.net_profit_cents, 0))}`
+              : ''}
           </p>
         </div>
       </div>
@@ -49,9 +61,11 @@ export default function History() {
         <label>
           Status
           <select value={f.status} onChange={set('status')}>
-            <option value="">All</option>
-            <option value="DELIVERED">Delivered</option>
-            <option value="CANCELLED">Cancelled</option>
+            {STATUS_FILTERS.map((s) => (
+              <option key={s.label} value={s.value}>
+                {s.label}
+              </option>
+            ))}
           </select>
         </label>
         <label>
@@ -73,16 +87,15 @@ export default function History() {
                 <th>Order</th>
                 <th>Customer</th>
                 <th>Status</th>
-                <th className="r">Revenue</th>
+                <th className="r">Total</th>
                 <th className="r">Est. profit</th>
-                <th>Delivery time</th>
+                <th>Placed</th>
                 <th>Completed</th>
               </tr>
             </thead>
             <tbody>
               {orders.map((o) => {
                 const doneAt = o.delivered_at || o.cancelled_at;
-                const mins = o.delivered_at ? Math.round((new Date(o.delivered_at).getTime() - new Date(o.created_at).getTime()) / 60000) : null;
                 return (
                   <tr key={o.id}>
                     <td>
@@ -95,10 +108,10 @@ export default function History() {
                     <td>
                       <StatusBadge status={o.status} />
                     </td>
-                    <td className="r">{o.status === 'DELIVERED' ? euro(o.total_cents) : <span className="muted">{euro(o.total_cents)}</span>}</td>
+                    <td className="r">{euro(o.total_cents)}</td>
                     <td className="r accent">{o.status === 'DELIVERED' ? euro(o.net_profit_cents) : '—'}</td>
-                    <td>{mins != null ? `${mins} min` : '—'}</td>
-                    <td>{dateTime(doneAt)}</td>
+                    <td>{dateTime(o.created_at)}</td>
+                    <td>{doneAt ? dateTime(doneAt) : '—'}</td>
                   </tr>
                 );
               })}

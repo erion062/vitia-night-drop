@@ -431,10 +431,13 @@ export function listActiveOrders() {
   return rows.map((r) => adminView(r, items.get(r.id)));
 }
 
-export function listHistory({ from, to, status, customer, number, limit = 200 }) {
-  const where = ["status IN ('DELIVERED','CANCELLED')"];
+const HISTORY_STATUSES = ['PENDING', 'ACCEPTED', 'PURCHASING', 'PURCHASED', 'ON_THE_WAY', 'DELIVERED', 'CANCELLED'];
+
+/** All-time orders (any status). Never deletes; read-only list for admin. */
+export function listHistory({ from, to, status, customer, number, limit = 500 }) {
+  const where = [];
   const params = [];
-  if (status && ['DELIVERED', 'CANCELLED'].includes(status)) {
+  if (status && HISTORY_STATUSES.includes(status)) {
     where.push('status = ?');
     params.push(status);
   }
@@ -454,11 +457,63 @@ export function listHistory({ from, to, status, customer, number, limit = 200 })
     where.push('created_at < ?');
     params.push(to);
   }
-  const rows = db
-    .prepare(`SELECT * FROM orders WHERE ${where.join(' AND ')} ORDER BY id DESC LIMIT ?`)
-    .all(...params, Math.min(limit, 1000));
+  const sql = where.length
+    ? `SELECT * FROM orders WHERE ${where.join(' AND ')} ORDER BY id DESC LIMIT ?`
+    : 'SELECT * FROM orders ORDER BY id DESC LIMIT ?';
+  const rows = db.prepare(sql).all(...params, Math.min(limit, 2000));
   const items = itemsFor(rows.map((r) => r.id));
   return rows.map((r) => adminView(r, items.get(r.id)));
+}
+
+/** Registered + guest checkout customers with order totals. Never deletes. */
+export function listCustomers({ q, limit = 500 } = {}) {
+  const params = [];
+  let filter = "u.role = 'customer'";
+  if (q) {
+    filter += ' AND (u.full_name LIKE ? OR u.phone LIKE ?)';
+    params.push(`%${q}%`, `%${q}%`);
+  }
+  return db
+    .prepare(
+      `SELECT u.id, u.full_name, u.phone, u.created_at, u.checkout_guest,
+              COUNT(o.id) AS order_count,
+              COALESCE(SUM(CASE WHEN o.status = 'DELIVERED' THEN o.total_cents ELSE 0 END), 0) AS spent_cents,
+              MAX(o.created_at) AS last_order_at
+       FROM users u
+       LEFT JOIN orders o ON o.user_id = u.id
+       WHERE ${filter}
+       GROUP BY u.id
+       ORDER BY u.id DESC
+       LIMIT ?`,
+    )
+    .all(...params, Math.min(limit, 2000))
+    .map((r) => ({
+      id: r.id,
+      full_name: r.full_name,
+      phone: r.phone,
+      created_at: r.created_at,
+      guest: !!r.checkout_guest,
+      order_count: r.order_count,
+      spent_cents: r.spent_cents,
+      last_order_at: r.last_order_at,
+    }));
+}
+
+export function getCustomer(id) {
+  const u = db.prepare("SELECT id, full_name, phone, created_at, checkout_guest FROM users WHERE id = ? AND role = 'customer'").get(id);
+  if (!u) throw new HttpError(404, 'Customer not found');
+  const rows = db.prepare('SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC').all(id);
+  const items = itemsFor(rows.map((r) => r.id));
+  return {
+    customer: {
+      id: u.id,
+      full_name: u.full_name,
+      phone: u.phone,
+      created_at: u.created_at,
+      guest: !!u.checkout_guest,
+    },
+    orders: rows.map((r) => adminView(r, items.get(r.id))),
+  };
 }
 
 export function trackableUserIds() {

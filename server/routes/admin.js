@@ -7,7 +7,15 @@ import { config } from '../config.js';
 import { CATEGORIES, db } from '../db.js';
 import { toAdmins, toUser } from '../realtime.js';
 import { clearDriverLocation, getDriverLocation, saveDriverLocation } from '../lib/location.js';
-import { changeStatus, getAdminOrder, listActiveOrders, listHistory, orderingState } from '../lib/orders.js';
+import {
+  changeStatus,
+  getAdminOrder,
+  getCustomer,
+  listActiveOrders,
+  listCustomers,
+  listHistory,
+  orderingState,
+} from '../lib/orders.js';
 import { createAnnouncement, listAnnouncements, removeAnnouncement } from '../lib/announcements.js';
 import { computeRevenue } from '../lib/revenue.js';
 import { addDays } from '../lib/time.js';
@@ -72,6 +80,15 @@ router.get('/orders', (req, res) => {
     return;
   }
   res.json({ orders: listActiveOrders(), state: orderingState() });
+});
+
+router.get('/customers', (req, res) => {
+  const q = typeof req.query.q === 'string' ? req.query.q.slice(0, 60) : '';
+  res.json({ customers: listCustomers({ q }) });
+});
+
+router.get('/customers/:id', (req, res) => {
+  res.json(getCustomer(int(req.params.id, { min: 1, field: 'Customer' })));
 });
 
 router.get('/orders/:id', (req, res) => {

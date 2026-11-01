@@ -25,6 +25,7 @@ const OrderDetail = lazy(() => import('./admin/OrderDetail'));
 const Drive = lazy(() => import('./admin/Drive'));
 const MapPage = lazy(() => import('./admin/MapPage'));
 const History = lazy(() => import('./admin/History'));
+const Customers = lazy(() => import('./admin/Customers'));
 const Revenue = lazy(() => import('./admin/Revenue'));
 const Products = lazy(() => import('./admin/Products'));
 const SettingsPage = lazy(() => import('./admin/SettingsPage'));
@@ -67,6 +68,8 @@ export default function App() {
                   <Route path="drive" element={<Drive />} />
                   <Route path="map" element={<MapPage />} />
                   <Route path="history" element={<History />} />
+                  <Route path="customers" element={<Customers />} />
+                  <Route path="customers/:id" element={<Customers />} />
                   <Route path="revenue" element={<Revenue />} />
                   <Route path="products" element={<Products />} />
                   <Route path="settings" element={<SettingsPage />} />
